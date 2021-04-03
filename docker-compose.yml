@@ -1,0 +1,51 @@
+version: "3.1"
+
+services:
+  # resource https://github.com/aditosoftware/docker-apache-derby
+  derby:
+    container_name: derby_db
+    build: ./derby-container
+    image: apache-derby
+    ports:
+      - 1527:1527
+      - 5000:5000
+    volumes:
+      - ./tmp/derby:/dbs
+    networks:
+      - db_net
+
+  mongodb:
+    container_name: mongo_db
+    image: mongo:4.2
+    environment:
+      - MONGO_INIT_DB_DATABASE=testing
+    volumes:
+      - ./tmp/mongo:/data/db
+    ports:
+      - "27017-27019:27017-27019"
+    networks:
+      - db_net
+  mongoclient:
+    image: mongoclient/mongoclient:latest
+    container_name: mongoclient
+    hostname: mongoclient
+    environment:
+      - MONGO_URL=mongodb://mongo_db:27017
+    volumes:
+      - ./tmp/mongoclient:/data/db
+    depends_on:
+      - mongodb
+    networks:
+      - db_net
+    ports:
+      - 3300:3000
+
+networks:
+  db_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        # Change this subnet range if it conflicts with your personal/work network
+        - subnet: 192.168.213.0/24
+          gateway: 192.168.213.1

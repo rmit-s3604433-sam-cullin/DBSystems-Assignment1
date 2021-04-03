@@ -9,7 +9,7 @@ javac dbquery.java
 #     pageSizes=( 512 1024 2048 4096 8192 16384 32768 65536 131072 )
 # }
 
-if $1 -eq "all"; then
+if [ "$1" = "all" ]; then
     pageSizes=( 512 1024 2048 4096 8192 16384 32768 65536 131072 )
 else
     pageSizes=( $1 )
@@ -20,8 +20,8 @@ fi
 echo "Testing Loading"
 for i in "${pageSizes[@]}"
 do
-    echo "java dbload -p $i ../../data.csv "
-    java dbload -p $i ../../data.csv 
+    echo "java dbload -p $i ../data.csv "
+    java dbload -p $i ../data.csv 
 done
 
 

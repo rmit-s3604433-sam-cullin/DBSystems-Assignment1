@@ -1,8 +1,8 @@
 import { Entity, IDbService, InitResult } from "../types";
 import * as JDBC from 'jdbc';
 import { Logger } from "./logger";
-import { IJDBC } from "../typesJDBC/pool";
-import { Connection, Statement } from "../typesJDBC/connection";
+import { IJDBC } from "../@types/JDBC/pool";
+import { Connection, Statement } from "../@types/JDBC/connection";
 
 export class DerbyServiceConfig {
     url: string;
@@ -47,7 +47,7 @@ class DerbyEntity extends Entity {
 
 
     public static CreateTable(table: string): string {
-        return `CREATE TABLE ${table} (id int, dateTime DATE, year int, mDate int, month VARCHAR(9), day VARCHAR(9), sensorId int, sensorName VARCHAR(39), hourlyCount int );`
+        return `CREATE TABLE ${table} (id int, dateTime TIMESTAMP, year int, mDate int, month VARCHAR(9), day VARCHAR(9), sensorId int, sensorName VARCHAR(39), hourlyCount int );`
     }
 
     public Query(table: string): string {

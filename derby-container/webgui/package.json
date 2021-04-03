@@ -1,0 +1,22 @@
+{
+  "name": "apache-derby-webgui",
+  "version": "0.5.0",
+  "description": "WebGui for apache derby (nodejs,jade,bootstrap)",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/supervisor index.js",
+    "start": "node index.js"
+  },
+  "author": "a.walker",
+  "license": "MIT",
+  "dependencies": {
+    "activedirectory": "~0.7.2",
+    "body-parser": "^1.15.0",
+    "cookie-parser": "~1.4.3",
+    "express": "^4.13.4",
+    "jade": "^1.11.0",
+    "mkdirp": "^0.5.5",
+    "multer": "^1.1.0",
+    "supervisor": "^0.12.0"
+  }
+}

@@ -7,3 +7,4 @@ Heap/data
 *.csv
 *.tar.gz
 *.zip
+tmp
