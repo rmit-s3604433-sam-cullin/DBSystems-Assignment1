@@ -1,0 +1,9 @@
+.vscode
+.ssh
+bin
+node_modules
+Heap/data
+*.class
+*.csv
+*.tar.gz
+*.zip

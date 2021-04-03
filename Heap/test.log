@@ -1,0 +1,65 @@
+Testing Loading
+java dbload -p 512 ../../data.csv 
+[-p, 512, ../../data.csv]
+Page total: 893649
+Record total: 3574594
+Load time: 22516ms
+java dbload -p 1024 ../../data.csv 
+[-p, 1024, ../../data.csv]
+Page total: 397178
+Record total: 3574594
+Load time: 18738ms
+java dbload -p 2048 ../../data.csv 
+[-p, 2048, ../../data.csv]
+Page total: 198589
+Record total: 3574594
+Load time: 17065ms
+java dbload -p 4096 ../../data.csv 
+[-p, 4096, ../../data.csv]
+Page total: 96611
+Record total: 3574594
+Load time: 17688ms
+java dbload -p 8192 ../../data.csv 
+[-p, 8192, ../../data.csv]
+Page total: 48306
+Record total: 3574594
+Load time: 15709ms
+java dbload -p 16384 ../../data.csv 
+[-p, 16384, ../../data.csv]
+Page total: 24153
+Record total: 3574594
+Load time: 16418ms
+java dbload -p 32768 ../../data.csv 
+[-p, 32768, ../../data.csv]
+Page total: 12036
+Record total: 3574594
+Load time: 16386ms
+java dbload -p 65536 ../../data.csv 
+[-p, 65536, ../../data.csv]
+Page total: 6008
+Record total: 3574594
+Load time: 18478ms
+java dbload -p 131072 ../../data.csv 
+[-p, 131072, ../../data.csv]
+Page total: 3002
+Record total: 3574594
+Load time: 18771ms
+Testing Query
+java dbquery FFFFFFF 512 
+Query time: 6914ms
+java dbquery FFFFFFF 1024 
+Query time: 3223ms
+java dbquery FFFFFFF 2048 
+Query time: 1745ms
+java dbquery FFFFFFF 4096 
+Query time: 1198ms
+java dbquery FFFFFFF 8192 
+Query time: 749ms
+java dbquery FFFFFFF 16384 
+Query time: 601ms
+java dbquery FFFFFFF 32768 
+Query time: 440ms
+java dbquery FFFFFFF 65536 
+Query time: 485ms
+java dbquery FFFFFFF 131072 
+Query time: 292ms
