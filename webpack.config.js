@@ -48,7 +48,7 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        filename: 'main.js',
+        filename: 'dbrunner',
         path: path.resolve(__dirname, 'bin'),
     },
 };

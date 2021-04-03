@@ -1,15 +1,17 @@
 import { DataFile } from "../datafile";
-import { MongoClient } from 'mongodb';
-import { IDbService } from "../types";
+import { Collection, Db, MongoClient } from 'mongodb';
+import { Entity, IDbService } from "../types";
 import { Logger } from "./logger";
 
 export class MongoServiceConfig {
     url: string;
     dbName: string;
+    tableName: string;
 
     constructor() {
         this.url = process.env.MONGO_URL;
         this.dbName = process.env.MONGO_DB;
+        this.tableName = process.env.MONGO_TABLE;
     }
 }
 
@@ -17,45 +19,65 @@ export class MongoServiceConfig {
 
 
 export class MongoDbService implements IDbService {
-    private readonly client: MongoClient;
+    private client: MongoClient;
+    private db: Db;
+    private collection: Collection<Entity>;
     private readonly logger: Logger = new Logger(MongoDbService.name);
     constructor(
         private readonly config: MongoServiceConfig = new MongoServiceConfig()
     ) {
-        this.client = new MongoClient(this.config.url);
     }
 
 
-    private async openConnection() {
-        return this.client.connect().finally(() => {
-            this.client.close();
+    private async getClient(): Promise<MongoClient> {
+        if (this.client) {
+            return Promise.resolve(this.client);
+        }
+        return new Promise((resolve, reject) => {
+            MongoClient.connect(this.config.url, (error, client) => {
+                if (error) {
+                    this.logger.error("Error Creating Connection", error)
+                    return reject(error)
+                }
+                this.client = client;
+                return resolve(this.client);
+            })
         })
     }
 
     private async getDb() {
-        return this.openConnection().then(client => {
-            return client.db(this.config.dbName);
+        if (this.db) {
+            return Promise.resolve(this.db);
+        }
+        return this.getClient().then(client => {
+            this.db = client.db(this.config.dbName);
+            return this.db
         })
     }
 
 
-    private async getCollection(name: string) {
+    private async getCollection() {
+        if (this.collection) {
+            return Promise.resolve(this.collection)
+        }
         return this.getDb().then((db => {
-            const collection = db.collection(name);
-            return collection
+            this.collection = db.collection(this.config.tableName);
+            return this.collection
         }))
     }
 
     async init() {
         this.logger.info("Init Connection ", this.config);
-        return Promise.resolve({ success: true });
+        await this.getCollection();
+        this.logger.info("Init Connected status:", this.client.isConnected())
+        return { success: true }
     }
 
 
-    async save(collectionName: string, data: any[]) {
-        return this.getCollection(collectionName).then(collection => {
+    async save(data: any[]) {
+        return this.getCollection().then(collection => {
             return new Promise((resolve, reject) => {
-                collection.bulkWrite(data, (err, res) => {
+                collection.insertMany(data, (err, res) => {
                     if (err) {
                         return reject(err)
                     }
@@ -65,11 +87,32 @@ export class MongoDbService implements IDbService {
         })
     }
 
+    async queryId(id: number): Promise<Entity> {
+        return this.getCollection().then((collection) => {
+            return new Promise((resolve, reject) => {
+                collection.findOne({ id: id }, (error, entity) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    return resolve(entity)
+                });
+            })
+        })
+    }
+
+
+
+    async clean() {
+        return this.getCollection().then((collection) => {
+            return collection.drop().catch((err) => {
+                this.logger.error("Clean DB ", err)
+            })
+        })
+    }
+
 
     async denit() {
-        this.getDb().then(db => {
-            return db.dropDatabase()
-        })
+        return this.client.close();
     }
 
 }

@@ -1,0 +1,26 @@
+[INFO][Main] ->  Started Total start:1617444779036
+[INFO][DataFile] ->  Creating Data Source ./data.csv
+[INFO][Main] ->  Started Init start:1617444779037
+[INFO][MongoDbService] ->  Init Connection  s {
+  url: 'mongodb://localhost:27017/',
+  dbName: 'test',
+  tableName: 'testing'
+}
+(node:41473) [MONGODB DRIVER] Warning: Current Server Discovery and Monitoring engine is deprecated, and will be removed in a future version. To use the new Server Discover and Monitoring engine, pass option { useUnifiedTopology: true } to the MongoClient constructor.
+[INFO][MongoDbService] ->  Init Connected status: true
+[INFO][Main] ->  Finished Init start:1617444779037 end:1617444779057 time:20
+[INFO][Main] ->  Started Writing start:1617444779057
+[INFO][Processor] ->  Starting the file stream  { batchSize: 1000, limit: 0 }
+[INFO][DataFile] ->  Subscribed To Data Source
+[INFO][DataFile] ->  Finished Loading the file
+[INFO][DataFile] ->  Closing Read Stream
+[INFO][Main] ->  Finished Writing start:1617444779057 end:1617444854280 time:75223
+[INFO][Main] ->  Started Deinit start:1617444854280
+[INFO][Main] ->  Finished Deinit start:1617444854280 end:1617444854284 time:4
+[INFO][Main] ->  Finished Total start:1617444779036 end:1617444854284 time:75248
+[INFO][Main] ->  {
+  Total: { start: 1617444779036, end: 1617444854284, time: 75248 },
+  Init: { start: 1617444779037, end: 1617444779057, time: 20 },
+  Writing: { start: 1617444779057, end: 1617444854280, time: 75223 },
+  Deinit: { start: 1617444854280, end: 1617444854284, time: 4 }
+}

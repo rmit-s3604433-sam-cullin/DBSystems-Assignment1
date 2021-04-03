@@ -1,0 +1,46 @@
+➜ docker exec -it dbrunner bash        
+root@de880e81475a:/app# dbrunner write -s derby -b 1000
+[INFO][Main] ->  Started Total start:1617453584272
+[INFO][DerbyDbService] ->  DerbyServiceConfig {
+  url: 'jdbc:derby://derby_db:1527/',
+  dbName: 'test',
+  tableName: 'testing',
+  derbyDrivers: [
+    '/db-derby-10.14.2.0-bin/lib/derby.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbytools.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbyclient.jar'
+  ]
+}
+[INFO][DataFile] ->  Creating Data Source ./data.csv
+[INFO][Main] ->  Started Init start:1617453584361
+[INFO][DerbyDbService] ->  Init Connection  DerbyServiceConfig {
+  url: 'jdbc:derby://derby_db:1527/',
+  dbName: 'test',
+  tableName: 'testing',
+  derbyDrivers: [
+    '/db-derby-10.14.2.0-bin/lib/derby.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbytools.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbyclient.jar'
+  ]
+}
+[INFO][DerbyDbService] ->  Successfully Connected
+[INFO][DerbyDbService] ->  Opened Connection  9fa2e0da-a514-42f5-995a-b78cc58df6b3
+[INFO][DerbyDbService] ->  Created table
+[INFO][Main] ->  Finished Init start:1617453584361 end:1617453584630 time:269
+[INFO][Main] ->  Started Writing start:1617453584631
+[INFO][Processor] ->  Starting the file stream  { batchSize: 1000, limit: 0 }
+[INFO][DataFile] ->  Subscribed To Data Source
+[INFO][DataFile] ->  Finished Loading the file
+[INFO][DataFile] ->  Closing Read Stream
+[INFO][Main] ->  Finished Writing start:1617453584631 end:1617454707640 time:1123009
+[INFO][Main] ->  Started Deinit start:1617454707660
+[INFO][DerbyDbService] ->  Released Connection
+[INFO][DerbyDbService] ->  No Connection to release
+[INFO][Main] ->  Finished Deinit start:1617454707660 end:1617454707667 time:7
+[INFO][Main] ->  Finished Total start:1617453584272 end:1617454707667 time:1123395
+[INFO][Main] ->  {
+  Total: { start: 1617453584272, end: 1617454707667, time: 1123395 },
+  Init: { start: 1617453584361, end: 1617453584630, time: 269 },
+  Writing: { start: 1617453584631, end: 1617454707640, time: 1123009 },
+  Deinit: { start: 1617454707660, end: 1617454707667, time: 7 }
+}

@@ -8,9 +8,14 @@ export class Logger {
     private timers: {
         [key: string]: {
             start: number,
-            end?: number
+            end?: number,
+            time?: number,
         }
     } = {};
+
+    public times() {
+        this.info(this.timers);
+    }
 
     public time(key: string, finished: boolean = false) {
         let isNewRecord = false;
@@ -22,6 +27,7 @@ export class Logger {
         }
         if (finished) {
             this.timers[key].end = +Date.now();
+            this.timers[key].time = this.timers[key].end - this.timers[key].start
         }
 
 
@@ -39,7 +45,7 @@ export class Logger {
     }
 
     public error(message: string, error: Error, ...args: any[]) {
-        console.log(`[ERROR][${this.context}] -> `, message, error.name, error.message, error.stack)
+        console.log(`[ERROR][${this.context}] -> `, message, error.name, error.message)
     }
 
     public warn(...args: any[]) {

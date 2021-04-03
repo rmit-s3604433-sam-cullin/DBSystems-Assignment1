@@ -6,7 +6,8 @@
   "scripts": {
     "start:dev": "ts-node ./src/index.ts",
     "build": "webpack",
-    "build:tsc": "tsc"
+    "build:tsc": "tsc",
+    "dbtester": "node ./bin/dbrunner "
   },
   "dependencies": {
     "@types/node": "^14.14.37",

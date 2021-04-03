@@ -15,7 +15,7 @@ export class DataFile {
             this.logger.info(`Subscribed To Data Source`)
             const readStream = createReadStream(this.file)
             readStream
-                .pipe(parse({ delimiter: ',' }))
+                .pipe(parse({ from: 2, delimiter: ',' }))
                 .on('data', (row) => {
                     const entity = Entity.create(row)
                     subscriber.next(entity)

@@ -1,0 +1,54 @@
+➜ docker exec -it dbrunner bash        
+root@492d19ef1869:/app# dbrunner query -s derby
+[INFO][Main] ->  Started Total start:1617455409056
+[INFO][DerbyDbService] ->  DerbyServiceConfig {
+  url: 'jdbc:derby://derby_db:1527/',
+  dbName: 'test',
+  tableName: 'testing',
+  derbyDrivers: [
+    '/db-derby-10.14.2.0-bin/lib/derby.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbytools.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbyclient.jar'
+  ]
+}
+[INFO][DataFile] ->  Creating Data Source ./data.csv
+[INFO][Main] ->  Started Init start:1617455409150
+[INFO][DerbyDbService] ->  Init Connection  DerbyServiceConfig {
+  url: 'jdbc:derby://derby_db:1527/',
+  dbName: 'test',
+  tableName: 'testing',
+  derbyDrivers: [
+    '/db-derby-10.14.2.0-bin/lib/derby.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbytools.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbyclient.jar'
+  ]
+}
+[INFO][DerbyDbService] ->  Successfully Connected
+[INFO][DerbyDbService] ->  Opened Connection  2549ce3d-20f6-463c-bf6d-3d92199e6397
+[INFO][DerbyDbService] ->  Created table
+[INFO][Main] ->  Finished Init start:1617455409150 end:1617455409465 time:315
+[INFO][Main] ->  Started Query start:1617455409466
+[INFO][Main] ->  Result {
+  ID: 23413,
+  DATETIME: '06/29/2009 02:00:00 PM',
+  MYEAR: 2009,
+  MDATE: 29,
+  MMONTH: 'June',
+  DAY: 'Monday',
+  TIME: 14,
+  SENSORID: 16,
+  SENSORNAME: 'Australia on Collins',
+  HOURLYCOUNT: 1958
+}
+[INFO][Main] ->  Finished Query start:1617455409466 end:1617455410971 time:1505
+[INFO][Main] ->  Started Deinit start:1617455410971
+[INFO][DerbyDbService] ->  Released Connection
+[INFO][DerbyDbService] ->  No Connection to release
+[INFO][Main] ->  Finished Deinit start:1617455410971 end:1617455410974 time:3
+[INFO][Main] ->  Finished Total start:1617455409056 end:1617455410975 time:1919
+[INFO][Main] ->  {
+  Total: { start: 1617455409056, end: 1617455410975, time: 1919 },
+  Init: { start: 1617455409150, end: 1617455409465, time: 315 },
+  Query: { start: 1617455409466, end: 1617455410971, time: 1505 },
+  Deinit: { start: 1617455410971, end: 1617455410974, time: 3 }
+}

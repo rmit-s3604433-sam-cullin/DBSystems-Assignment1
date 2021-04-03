@@ -20,13 +20,13 @@ export class Processor {
         return this.dbService.init()
     }
 
-    run() {
+    save() {
         this.logger.info('Starting the file stream ', this.config)
         return this.fileStream.$data.pipe(
             this.config.limit > 0 ? take(this.config.limit) : map(x => x),
             this.config.batchSize > 0 ? bufferCount(this.config.batchSize) : toArray(),
             concatMap((rows) => {
-                return from(this.dbService.save('records', rows).then(result => {
+                return from(this.dbService.save(rows).then(result => {
                     return [rows, result]
                 }));
             }),
@@ -39,6 +39,7 @@ export class Processor {
         )
     }
 
+    // Used to scan and find entity sizes
     // run() {
     //     return this.fileStream.$data.pipe(
     //         take(this.config.limit),

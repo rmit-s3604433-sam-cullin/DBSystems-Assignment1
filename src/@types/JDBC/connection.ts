@@ -17,10 +17,13 @@ export interface Statement {
     getGeneratedKeys: (callback: Callback) => void
 }
 
-export interface Connection {
+export interface ConnectionObject {
     uuid: string;
+    conn: Connection;
+    keepalive: boolean
+}
 
-
+export interface Connection {
     clearWarnings: (callback: Callback) => void;
     close: (callback: Callback) => void;
     commit: (callback: Callback) => void;

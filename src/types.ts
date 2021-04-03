@@ -39,6 +39,8 @@ export interface InitResult {
 }
 export interface IDbService {
     init(): Promise<InitResult>;
-    save(collection: string, data: Entity[]): Promise<any>;
+    save(data: Entity[]): Promise<any>;
+    queryId(id: any): Promise<Entity>;
+    clean(): Promise<any>
     denit(): Promise<any>;
 }

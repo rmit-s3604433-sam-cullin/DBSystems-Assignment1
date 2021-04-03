@@ -1,6 +1,15 @@
 version: "3.1"
 
 services:
+  dbrunner:
+    build: ./
+    container_name: dbrunner
+    image: dbrunner
+    volumes:
+      - ./data.csv:/app/data.csv
+    networks:
+      - db_net
+
   # resource https://github.com/aditosoftware/docker-apache-derby
   derby:
     container_name: derby_db

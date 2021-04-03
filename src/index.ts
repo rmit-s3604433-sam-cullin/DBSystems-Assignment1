@@ -27,40 +27,71 @@ const DbServiceFactory = (name: string, ...args: any[]): IDbService => {
 
 
 
-const main = async (type: string, fileSource: string, limit: number, batchSize: number) => {
+const main = async (commands: string[], { service, file, query, limit, batchSize }: CLIOptions) => {
     const logger: Logger = new Logger("Main");
-    const dbService: IDbService = DbServiceFactory(type);
-    const fileStream: DataFile = new DataFile(fileSource);
+    logger.time("Total");
 
+
+    const dbService: IDbService = DbServiceFactory(service);
+    const fileStream: DataFile = new DataFile(file);
     const processor: Processor = new Processor({ batchSize, limit }, fileStream, dbService);
 
-    await processor.init();
-    logger.time('Writing')
-    const result$ = processor.run();
-    const result = await result$.toPromise();
-    logger.time('Writing', true)
 
-    logger.time('Destroy');
+    logger.time("Init");
+    await processor.init();
+    logger.time("Init", true)
+
+    if (commands.includes("write")) {
+        logger.time('Writing')
+        const result$ = processor.save();
+        const result = await result$.toPromise()
+        logger.time('Writing', true)
+    }
+
+    if (commands.includes("query")) {
+        logger.time('Query');
+        const result = await dbService.queryId(query);
+        logger.info("Result", result)
+        logger.time('Query', true)
+    }
+
+    if (commands.includes("clean")) {
+        logger.time('Clean');
+        const result = await dbService.clean();
+        logger.info("Result", result);
+        logger.time('Clean', true)
+    }
+
+
+    logger.time('Deinit');
     const dinitResult = await processor.denit();
-    logger.time('Destroy', true)
-    console.log("Denit ", dinitResult);
+    logger.time('Deinit', true)
+
+    logger.time("Total", true)
+
+
+    logger.times();
 
 
 
 }
+
 
 interface CLIOptions {
     service: string;
     file: string;
     limit: number;
     batchSize: number;
+    query?: string;
+    command: string;
 }
 
-var argv: CLIOptions = yargs.scriptName('dbtester')
+
+
+var argBuilder = yargs.scriptName('dbtester')
     .usage('$0 <cmd> [args]')
     .help('h')
     .alias('h', 'help')
-    .command('write', 'runs a test load')
     .alias('s', 'service')
     .describe('s', 'service to use for loading')
     .default('s', 'mock')
@@ -78,11 +109,19 @@ var argv: CLIOptions = yargs.scriptName('dbtester')
     .describe('b', 'The number of items you want to run in each batch 0 == all')
     .default('b', 0)
     .nargs('b', 1)
-    .argv as unknown as CLIOptions;
+    .command('write', 'runs a test load')
+    .command('clean', 'cleans all data from database')
+    .command('query', 'queries the data base for an id')
+    .alias('q', 'query')
+    .describe('q', 'The id to query in the database')
+    .default('q', 23413)
+    .nargs('q', 1)
+
+var argv: CLIOptions = argBuilder.argv as unknown as CLIOptions;
+var commands = argv["_"];
 
 
-
-main(argv.service, argv.file, argv.limit, argv.batchSize)
+main(commands, argv)
 
 
 

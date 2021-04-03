@@ -1,0 +1,35 @@
+[INFO][Main] ->  Started Total start:1617444990508
+[INFO][DataFile] ->  Creating Data Source ./data.csv
+[INFO][Main] ->  Started Init start:1617444990509
+[INFO][MongoDbService] ->  Init Connection  s {
+  url: 'mongodb://localhost:27017/',
+  dbName: 'test',
+  tableName: 'testing'
+}
+(node:41773) [MONGODB DRIVER] Warning: Current Server Discovery and Monitoring engine is deprecated, and will be removed in a future version. To use the new Server Discover and Monitoring engine, pass option { useUnifiedTopology: true } to the MongoClient constructor.
+[INFO][MongoDbService] ->  Init Connected status: true
+[INFO][Main] ->  Finished Init start:1617444990509 end:1617444990526 time:17
+[INFO][Main] ->  Started Query start:1617444990526
+[INFO][Main] ->  Result {
+  _id: 60683fb49d7922a201a3fffd,
+  id: 362296,
+  dateTime: '09/22/2011 07:00:00 PM',
+  year: 2011,
+  month: 'September',
+  mDate: 22,
+  day: 'Thursday',
+  time: 19,
+  sensorId: 6,
+  sensorName: 'Flinders Street Station Underpass',
+  hourlyCount: 1443
+}
+[INFO][Main] ->  Finished Query start:1617444990526 end:1617444990704 time:178
+[INFO][Main] ->  Started Deinit start:1617444990704
+[INFO][Main] ->  Finished Deinit start:1617444990704 end:1617444990709 time:5
+[INFO][Main] ->  Finished Total start:1617444990508 end:1617444990709 time:201
+[INFO][Main] ->  {
+  Total: { start: 1617444990508, end: 1617444990709, time: 201 },
+  Init: { start: 1617444990509, end: 1617444990526, time: 17 },
+  Query: { start: 1617444990526, end: 1617444990704, time: 178 },
+  Deinit: { start: 1617444990704, end: 1617444990709, time: 5 }
+}
