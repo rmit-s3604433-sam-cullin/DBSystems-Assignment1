@@ -3,6 +3,8 @@
 # Task 0: DbService Script
 
 ## Summary
+The data used for testing can be found [HERE](https://data.melbourne.vic.gov.au/Transport/Pedestrian-Counting-System-Monthly-counts-per-hour/).
+
 
 For testing the databases I decided to use Typescript as it the language I am most comfortable with. There are four key aspects to the script.
 - CLI Interface
