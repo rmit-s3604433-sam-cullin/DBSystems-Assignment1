@@ -7,7 +7,8 @@
     "start:dev": "ts-node ./src/index.ts",
     "build": "webpack",
     "build:tsc": "tsc",
-    "dbrunner": "node ./bin/dbrunner "
+    "dbrunner": "node ./bin/dbrunner ",
+    "genpdf": "pandoc README.md -o README.pdf '-fmarkdown-implicit_figures -o' --from=markdown -V geometry:margin=.4in --toc --highlight-style=espresso"
   },
   "dependencies": {
     "@types/node": "^14.14.37",
