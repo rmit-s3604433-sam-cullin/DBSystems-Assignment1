@@ -1,0 +1,31 @@
+root@85d73c40fd55:/app# dbrunner write -s mongo -o -b 1000
+[INFO][Main] ->  Started Total start:1617501301965
+[INFO][DataFile] ->  Creating Data Source ./data.csv
+[INFO][Main] ->  Started Init start:1617501301971
+[INFO][MongoDbService] ->  Init Connection  MongoServiceConfig {
+  optimize: true,
+  url: 'mongodb://mongo_db:27017/',
+  dbName: 'test',
+  tableName: 'testing'
+}
+(node:837) [MONGODB DRIVER] Warning: Current Server Discovery and Monitoring engine is deprecated, and will be removed in a future version. To use the new Server Discover and Monitoring engine, pass option { useUnifiedTopology: true } to the MongoClient constructor.
+[INFO][MongoDbService] ->  Optimizing ...
+[INFO][MongoDbService] ->  Created ID Index
+[INFO][MongoDbService] ->  Created Date Time Index
+[INFO][MongoDbService] ->  Init Connected status: true
+[INFO][Main] ->  Finished Init start:1617501301971 end:1617501302190 time:219
+[INFO][Main] ->  Started Writing start:1617501302190
+[INFO][Processor] ->  Starting the file stream  { batchSize: 1000, limit: 0 }
+[INFO][DataFile] ->  Subscribed To Data Source
+[INFO][DataFile] ->  Finished Loading the file
+[INFO][DataFile] ->  Closing Read Stream
+[INFO][Main] ->  Finished Writing start:1617501302190 end:1617501530859 time:228669
+[INFO][Main] ->  Started Deinit start:1617501530865
+[INFO][Main] ->  Finished Deinit start:1617501530865 end:1617501530883 time:18
+[INFO][Main] ->  Finished Total start:1617501301965 end:1617501530884 time:228919
+[INFO][Main] ->  {
+  Total: { start: 1617501301965, end: 1617501530884, time: 228919 },
+  Init: { start: 1617501301971, end: 1617501302190, time: 219 },
+  Writing: { start: 1617501302190, end: 1617501530859, time: 228669 },
+  Deinit: { start: 1617501530865, end: 1617501530883, time: 18 }
+}

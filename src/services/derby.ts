@@ -1,5 +1,5 @@
 import { Entity, IDbService, InitResult } from "../types";
-import * as JDBC from 'jdbc';
+import JDBC from 'jdbc';
 import { Logger } from "./logger";
 import { IJDBC } from "../@types/JDBC/pool";
 import { Connection, Statement } from "../@types/JDBC/connection";
@@ -11,7 +11,7 @@ export class DerbyServiceConfig {
     tableName: string;
     derbyDrivers: string[];
 
-    constructor() {
+    constructor(public readonly optimize: boolean = false) {
         this.url = process.env.DERBY_URL;
         this.dbName = process.env.DERBY_DB;
         this.tableName = process.env.DERBY_TABLE;
@@ -49,14 +49,34 @@ class DerbyEntity extends Entity {
         return sql //+ ";"
     }
 
-    public static DropTable(table: string) {
-        return `DROP TABLE ${table}`;
+
+
+    public static CreateIdIndex(table: string): string {
+        // NOTE: Unique index could only write about 60'000 before slowing down to an unusable level tried with batch size 100 and 1000
+        return `CREATE INDEX index_${table}_id on ${table}(id)`
     }
+
+    public static CreateDateTimeIndex(table: string): string {
+        return `CREATE INDEX index_${table}_datetime on ${table}(dateTime)`
+    }
+
+    public static DropIdIndex(table: string): string {
+        return `DROP INDEX index_${table}_id`
+    }
+
+    public static DropDateTimeIndex(table: string): string {
+        return `DROP INDEX index_${table}_datetime`
+    }
+
 
 
 
     public static CreateTable(table: string): string {
         return `CREATE TABLE ${table} (id int, dateTime VARCHAR(22), mYear int, mDate int, mMonth VARCHAR(9), day VARCHAR(9),time int,  sensorId int, sensorName VARCHAR(39), hourlyCount int )`
+    }
+
+    public static DropTable(table: string) {
+        return `DROP TABLE ${table}`;
     }
 
     public Query(table: string): string {
@@ -81,16 +101,15 @@ export class DerbyDbService implements IDbService {
             // setup the classpath before the first java call.
             jinst.setupClasspath(this.config.derbyDrivers);
         }
-        this.logger.info(config)
         this.client = new JDBC({
             url: `${this.config.url}${this.config.dbName};create=true`,
-            //dirvername: 'my.jdbc.DriverName',
+            //dirvername: 'example.jdbc.DriverName',
             //user: this.config.user,
             //password: this.config.password
         });
     }
     queryId(id: any): Promise<Entity> {
-        return this.createStatement().then((statement) => {
+        return this.getStatement().then((statement) => {
             let entity = new DerbyEntity();
             entity.id = id;
             return new Promise((resolve, reject) => {
@@ -112,15 +131,35 @@ export class DerbyDbService implements IDbService {
         })
     }
 
-    clean(): Promise<any> {
-        return this.createStatement().then((statement) => {
-            return new Promise((resolve, reject) => {
+    async clean(): Promise<any> {
+        return this.getStatement().then(async (statement) => {
+            await new Promise((resolve, reject) => {
                 statement.executeUpdate(DerbyEntity.DropTable(this.config.tableName), (err, count) => {
-                    if (err) {
-                        this.logger.error(`Error Dropping Table ${this.config.tableName} `, err);
+                    if (err && !err.message.includes('does not exist')) {
+                        this.logger.error(`Error DropTable ${this.config.tableName} `, err);
                         return reject(err);
                     }
                     this.logger.info(`Dropped table ${this.config.tableName}`)
+                    return resolve(count)
+                })
+            })
+            await new Promise((resolve, reject) => {
+                statement.executeUpdate(DerbyEntity.DropIdIndex(this.config.tableName), (err, count) => {
+                    if (err && !err.message.includes('does not exist')) {
+                        this.logger.error(`Error DropIdIndex ${this.config.tableName} `, err);
+                        return reject(err);
+                    }
+                    this.logger.info(`Dropped Index Id ${this.config.tableName}`)
+                    return resolve(count)
+                })
+            })
+            await new Promise((resolve, reject) => {
+                statement.executeUpdate(DerbyEntity.DropDateTimeIndex(this.config.tableName), (err, count) => {
+                    if (err && !err.message.includes('does not exist')) {
+                        this.logger.error(`Error DropDateTimeIndex ${this.config.tableName} `, err);
+                        return reject(err);
+                    }
+                    this.logger.info(`Dropped Index DateTime ${this.config.tableName}`)
                     return resolve(count)
                 })
             })
@@ -145,7 +184,7 @@ export class DerbyDbService implements IDbService {
         })
     }
 
-    private async createStatement(): Promise<Statement> {
+    private async getStatement(): Promise<Statement> {
         return this.getConnection().then(conn => {
             return new Promise((resolve, reject) => {
                 conn.createStatement((err, statement) => {
@@ -160,9 +199,46 @@ export class DerbyDbService implements IDbService {
     }
 
 
-    async init(): Promise<InitResult> {
-        this.logger.info("Init Connection ", this.config);
-        const result = await new Promise<InitResult>((resolve, reject) => {
+
+
+    private async initOptimization(): Promise<InitResult> {
+        const idIndex: InitResult = await this.getStatement().then(statement => {
+            return new Promise((resolve, reject) => {
+                const sql = DerbyEntity.CreateIdIndex(this.config.tableName);
+                statement.executeUpdate(sql, (error, result) => {
+                    if (error) {
+                        this.logger.info("Error Creating Id Index sql: ", sql);
+                        this.logger.error("Error creating Id Index ", error);
+                        return reject({ success: false, error })
+                    }
+                    return resolve({ success: true })
+                })
+
+            })
+        })
+        if (!idIndex.success) {
+            return idIndex;
+        }
+        const dateTimeIndex: InitResult = await this.getStatement().then((statement) => {
+            return new Promise((resolve, reject) => {
+                const sql = DerbyEntity.CreateDateTimeIndex(this.config.tableName);
+                statement.executeUpdate(sql, (error, result) => {
+                    if (error) {
+                        this.logger.info("Error Creating DateTime Index sql: ", sql);
+                        this.logger.error("Error creating DateTime Index ", error);
+                        return reject({ success: false, error })
+                    }
+                    return resolve({ success: true })
+                })
+
+            })
+        })
+        return dateTimeIndex;
+
+    }
+
+    private async initConnection(): Promise<InitResult> {
+        return new Promise<InitResult>((resolve, reject) => {
             this.client.initialize((err) => {
                 if (err) {
                     this.logger.error("Error Initializing Client", err);
@@ -172,10 +248,10 @@ export class DerbyDbService implements IDbService {
                 return resolve({ success: true });
             })
         });
-        if (!result.success) {
-            return result;
-        }
-        return this.createStatement().then((statement) => {
+    }
+
+    private async initTable(): Promise<InitResult> {
+        return this.getStatement().then((statement) => {
             return new Promise((resolve, reject) => {
                 const sql = DerbyEntity.CreateTable(this.config.tableName)
                 statement.executeUpdate(sql, (error, result) => {
@@ -189,12 +265,30 @@ export class DerbyDbService implements IDbService {
                 })
             })
         })
+    }
 
+
+    async init(): Promise<InitResult> {
+        this.logger.info("Init Connection ", this.config);
+        let result = await this.initConnection();
+        if (!result.success) {
+            return result;
+        }
+        result = await this.initTable()
+        if (!result.success) {
+            return result;
+        }
+
+        if (this.config.optimize) {
+            result = await this.initOptimization();
+        }
+
+        return result;
     }
 
 
     async save(data: Entity[]) {
-        return this.createStatement().then(statement => {
+        return this.getStatement().then(statement => {
             return new Promise((resolve, reject) => {
                 const sql = DerbyEntity.BulkInsert(this.config.tableName, data)
                 statement.executeUpdate(

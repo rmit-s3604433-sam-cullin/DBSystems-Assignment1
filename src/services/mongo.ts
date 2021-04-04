@@ -8,7 +8,7 @@ export class MongoServiceConfig {
     dbName: string;
     tableName: string;
 
-    constructor() {
+    constructor(public readonly optimize: boolean = false) {
         this.url = process.env.MONGO_URL;
         this.dbName = process.env.MONGO_DB;
         this.tableName = process.env.MONGO_TABLE;
@@ -66,9 +66,51 @@ export class MongoDbService implements IDbService {
         }))
     }
 
+    private async optimize() {
+        this.logger.info(`Optimizing ...`)
+        return this.getCollection().then((collection) => {
+            return new Promise((resolve, reject) => {
+                collection.createIndex({
+                    "id": 1 // creates an ascending ordered index on column id  NOTE: cannot use hashed index when using unique options  https://docs.mongodb.com/manual/reference/method/db.collection.createIndex/#unique
+                }, {
+                    unique: true,
+                    name: `index_${this.config.tableName}_id`,
+
+                }, (error, result) => {
+                    if (error) {
+                        this.logger.error(`Creating ID Index `, error);
+                        return reject(error);
+                    }
+                    this.logger.info(`Created ID Index`)
+                    return resolve(result);
+                })
+            }).then(x => {
+                return new Promise((resolve, reject) => {
+                    collection.createIndex({
+                        "dateTime": 1 // creates an ascending ordered index on column dateTime
+                    }, {
+                        unique: false,
+                        name: `index_${this.config.tableName}_dateTime`,
+
+                    }, (error, result) => {
+                        if (error) {
+                            this.logger.error(`Creating Date Time Index `, error);
+                            return reject(error);
+                        }
+                        this.logger.info(`Created Date Time Index`)
+                        return resolve(result);
+                    })
+                })
+            })
+        })
+    }
+
     async init() {
         this.logger.info("Init Connection ", this.config);
         await this.getCollection();
+        if (this.config.optimize) {
+            await this.optimize();
+        }
         this.logger.info("Init Connected status:", this.client.isConnected())
         return { success: true }
     }
@@ -103,10 +145,14 @@ export class MongoDbService implements IDbService {
 
 
     async clean() {
-        return this.getCollection().then((collection) => {
-            return collection.drop().catch((err) => {
+        return this.getCollection().then(async (collection) => {
+            await collection.drop().catch((err) => {
                 this.logger.error("Clean DB ", err)
             })
+
+            await collection.dropIndex(`index_${this.config.tableName}_id`)
+
+            await collection.dropIndex(`index_${this.config.tableName}_dateTime`)
         })
     }
 

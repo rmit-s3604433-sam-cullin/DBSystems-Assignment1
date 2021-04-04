@@ -1,3 +1,4 @@
+import ProgressBar from "progress";
 
 
 
@@ -5,7 +6,7 @@ export class Logger {
     constructor(private readonly context: string) { }
 
 
-    private timers: {
+    private static timers: {
         [key: string]: {
             start: number,
             end?: number,
@@ -13,30 +14,49 @@ export class Logger {
         }
     } = {};
 
+    private static progresses: {
+        [key: string]: ProgressBar
+    } = {};
+
     public times() {
-        this.info(this.timers);
+        this.info(Logger.timers);
     }
 
     public time(key: string, finished: boolean = false) {
         let isNewRecord = false;
-        if (!(key in this.timers)) {
+        if (!(key in Logger.timers)) {
             isNewRecord = true;
-            this.timers[key] = {
+            Logger.timers[key] = {
                 start: +Date.now()
             }
         }
         if (finished) {
-            this.timers[key].end = +Date.now();
-            this.timers[key].time = this.timers[key].end - this.timers[key].start
+            Logger.timers[key].end = +Date.now();
+            Logger.timers[key].time = Logger.timers[key].end - Logger.timers[key].start
         }
 
 
-        if (this.timers[key].end) {
-            this.info(`Finished ${key} start:${this.timers[key].start} end:${this.timers[key].end} time:${this.timers[key].end - this.timers[key].start}`)
+        if (Logger.timers[key].end) {
+            this.info(`Finished ${key} start:${Logger.timers[key].start} end:${Logger.timers[key].end} time:${Logger.timers[key].end - Logger.timers[key].start}`)
         } else if (isNewRecord) {
-            this.info(`Started ${key} start:${this.timers[key].start}`)
+            this.info(`Started ${key} start:${Logger.timers[key].start}`)
         } else {
-            this.info(`Update ${key} start:${this.timers[key].start} duration:${+Date.now() - this.timers[key].start}`)
+            this.info(`Update ${key} start:${Logger.timers[key].start} duration:${+Date.now() - Logger.timers[key].start}`)
+        }
+    }
+
+
+    public progress(key: string, tick: number, size: number = 3574594) {
+        if (!(key in Logger.progresses)) {
+            Logger.progresses[key] = new ProgressBar(`${this.context} Loading [:bar] :current/:total :percent :etas`, {
+                total: size
+            })
+        }
+        let bar = Logger.progresses[key];
+        bar.tick(tick);
+        if (bar.complete) {
+            bar.terminate();
+            delete Logger.progresses[key];
         }
     }
 

@@ -1,9 +1,9 @@
 import { DataFile } from "./datafile";
 import { MockDbService } from "./services/mock";
-import { MongoDbService } from "./services/mongo";
+import { MongoDbService, MongoServiceConfig } from "./services/mongo";
 import { Processor } from "./processor";
 import { IDbService, Type } from "./types";
-import { DerbyDbService } from "./services/derby";
+import { DerbyDbService, DerbyServiceConfig } from "./services/derby";
 import * as dotenv from 'dotenv'
 import * as yargs from 'yargs';
 import { alias } from "yargs";
@@ -12,27 +12,40 @@ dotenv.config();
 
 
 
-const DBServices: { [key: string]: Type<IDbService> } = {
-    ['mock']: MockDbService,
-    ['mongo']: MongoDbService,
-    ['derby']: DerbyDbService
+const DBServices: { [key: string]: (options: CLIOptions) => IDbService } = {
+    ['mock']: (options: CLIOptions) => {
+        return new MockDbService()
+    },
+    ['mongo']: (options: CLIOptions) => {
+        return new MongoDbService(
+            new MongoServiceConfig(options.optimize == true)
+        )
+    },
+    ['derby']: (options: CLIOptions) => {
+        return new DerbyDbService(
+            new DerbyServiceConfig(options.optimize == true)
+        )
+    },
 }
-const DbServiceFactory = (name: string, ...args: any[]): IDbService => {
-    if (!(name in DBServices)) {
-        throw new Error(`No Db Service for ${name} `);
+const DbServiceFactory = (options: CLIOptions): IDbService => {
+    if (!(options.service in DBServices)) {
+        throw new Error(`No Db Service for ${options.service} `);
     }
-    return new DBServices[name](...args);
+    return DBServices[options.service](options);
 }
 
 
 
 
-const main = async (commands: string[], { service, file, query, limit, batchSize }: CLIOptions) => {
+const main = async (commands: string[], options: CLIOptions) => {
+    let { file, query, limit, batchSize } = options;
+
     const logger: Logger = new Logger("Main");
     logger.time("Total");
 
 
-    const dbService: IDbService = DbServiceFactory(service);
+
+    const dbService: IDbService = DbServiceFactory(options);
     const fileStream: DataFile = new DataFile(file);
     const processor: Processor = new Processor({ batchSize, limit }, fileStream, dbService);
 
@@ -82,8 +95,9 @@ interface CLIOptions {
     file: string;
     limit: number;
     batchSize: number;
-    query?: string;
+    query: string;
     command: string;
+    optimize: boolean;
 }
 
 
@@ -92,6 +106,9 @@ var argBuilder = yargs.scriptName('dbtester')
     .usage('$0 <cmd> [args]')
     .help('h')
     .alias('h', 'help')
+    .command('write', 'runs a test load')
+    .command('clean', 'cleans all data from database')
+    .command('query', 'queries the data base for an id')
     .alias('s', 'service')
     .describe('s', 'service to use for loading')
     .default('s', 'mock')
@@ -109,13 +126,14 @@ var argBuilder = yargs.scriptName('dbtester')
     .describe('b', 'The number of items you want to run in each batch 0 == all')
     .default('b', 0)
     .nargs('b', 1)
-    .command('write', 'runs a test load')
-    .command('clean', 'cleans all data from database')
-    .command('query', 'queries the data base for an id')
     .alias('q', 'query')
     .describe('q', 'The id to query in the database')
     .default('q', 23413)
     .nargs('q', 1)
+    .alias('o', 'optimize')
+    .describe('o', 'Weather or not to optimize the Db Service')
+    .default('o', false)
+    .boolean('o')
 
 var argv: CLIOptions = argBuilder.argv as unknown as CLIOptions;
 var commands = argv["_"];

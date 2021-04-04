@@ -2,10 +2,12 @@
     "compilerOptions": {
       "outDir": "./bin/",
       "noImplicitAny": false,
-      "target": "es5",
+      "target": "es2019",
       "sourceMap": true,
       "allowJs": true,
-      "lib": [ "es2015", "dom"]
+      "module": "CommonJS",
+      "lib": [ "ES2019" ],
+      "esModuleInterop": true
     },
     "include": ["src"]
   }

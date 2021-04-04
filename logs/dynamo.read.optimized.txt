@@ -1,0 +1,37 @@
+root@706800f42742:/app# dbrunner query -s mongo
+[INFO][Main] ->  Started Total start:1617504072724
+[INFO][DataFile] ->  Creating Data Source ./data.csv
+[INFO][Main] ->  Started Init start:1617504072729
+[INFO][MongoDbService] ->  Init Connection  MongoServiceConfig {
+  optimize: false,
+  url: 'mongodb://mongo_db:27017/',
+  dbName: 'test',
+  tableName: 'testing'
+}
+(node:838) [MONGODB DRIVER] Warning: Current Server Discovery and Monitoring engine is deprecated, and will be removed in a future version. To use the new Server Discover and Monitoring engine, pass option { useUnifiedTopology: true } to the MongoClient constructor.
+[INFO][MongoDbService] ->  Init Connected status: true
+[INFO][Main] ->  Finished Init start:1617504072729 end:1617504072800 time:71
+[INFO][Main] ->  Started Query start:1617504072801
+[INFO][Main] ->  Result {
+  _id: 6069244c085b9c01fed0cd09,
+  id: 23413,
+  dateTime: '06/29/2009 02:00:00 PM',
+  year: 2009,
+  month: 'June',
+  mDate: 29,
+  day: 'Monday',
+  time: 14,
+  sensorId: 16,
+  sensorName: 'Australia on Collins',
+  hourlyCount: 1958
+}
+[INFO][Main] ->  Finished Query start:1617504072801 end:1617504072830 time:29
+[INFO][Main] ->  Started Deinit start:1617504072831
+[INFO][Main] ->  Finished Deinit start:1617504072831 end:1617504072841 time:10
+[INFO][Main] ->  Finished Total start:1617504072724 end:1617504072843 time:119
+[INFO][Main] ->  {
+  Total: { start: 1617504072724, end: 1617504072843, time: 119 },
+  Init: { start: 1617504072729, end: 1617504072800, time: 71 },
+  Query: { start: 1617504072801, end: 1617504072830, time: 29 },
+  Deinit: { start: 1617504072831, end: 1617504072841, time: 10 }
+}

@@ -22,11 +22,13 @@ export class Processor {
 
     save() {
         this.logger.info('Starting the file stream ', this.config)
+        this.logger.progress('LoadingData', 0, this.config.limit > 0 ? this.config.limit : undefined)
         return this.fileStream.$data.pipe(
             this.config.limit > 0 ? take(this.config.limit) : map(x => x),
             this.config.batchSize > 0 ? bufferCount(this.config.batchSize) : toArray(),
             concatMap((rows) => {
                 return from(this.dbService.save(rows).then(result => {
+                    this.logger.progress('LoadingData', rows.length)
                     return [rows, result]
                 }));
             }),

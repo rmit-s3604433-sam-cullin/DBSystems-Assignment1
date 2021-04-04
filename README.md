@@ -3,7 +3,7 @@
 
 Ran a script to find the larges byte sizes of each column 
 
-
+Total elements 3906597
 # Task 0: DbService Script
 For testing the databases I decided to use Typescript as it the language I am most comfortable with. There are four key aspects to the script.
 - CLI Interface
@@ -61,7 +61,25 @@ CREATE TABLE TESTING (
 
 Test Results:
 ### Optimizations
+In order to optimize the queries I decided to create a unique index for the id column this would allow people to search for a single record faster. I also added an index to the dateTime column which is standard practice when dealing with time searies data. This will allow for faster range searches and filters, for example how many people traveled in January. 
+```sql
+CREATE TABLE TESTING (
+    id int,
+    dateTime TIMESTAMP,
+    year int,
+    mDate int,
+    month VARCHAR(9),
+    day VARCHAR(9),
+    sensorId int,
+    sensorName VARCHAR(39),
+    hourlyCount int
+);
+CREATE UNIQUE INDEX index_testing_id on TESTING(id);
+CREATE INDEX index_testing_datetime on TESTING(dateTime);
+```
 
+NOTE: Unique index could only write about 60'000 before slowing down to an unusable level tried with batch size 100 and 1000 estimated time 7 hours
+NOTE: With non unique index derby could write about 75'000 before slowing down to an unusable level estimated time 5 hours
 Test Results:
 
 
