@@ -1,0 +1,36 @@
+❯ docker exec -it dbrunner bash       
+root@4721de6f59a2:/app# dbrunner write -s derby -o -b 100 
+[INFO][Main] ->  Started Total start:1617507979281
+[INFO][DataFile] ->  Creating Data Source ./data.csv
+[INFO][Main] ->  Started Init start:1617507979358
+[INFO][DerbyDbService] ->  Init Connection  DerbyServiceConfig {
+  optimize: true,
+  url: 'jdbc:derby://derby_db:1527/',
+  dbName: 'test',
+  tableName: 'testing',
+  derbyDrivers: [
+    '/db-derby-10.14.2.0-bin/lib/derby.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbytools.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbyclient.jar'
+  ]
+}
+[INFO][DerbyDbService] ->  Successfully Connected
+[INFO][DerbyDbService] ->  Opened Connection  e21d422c-7abb-4755-a138-1873a703b346
+[INFO][DerbyDbService] ->  Created table
+[INFO][Main] ->  Finished Init start:1617507979358 end:1617507981509 time:2151
+[INFO][Main] ->  Started Writing start:1617507981509
+[INFO][Processor] ->  Starting the file stream  { batchSize: 100, limit: 0 }
+Processor Loading [======================================================================================================================================================================================================================================] 3574594/3574594 100% 0.0
+
+[INFO][Main] ->  Finished Writing start:1617507981509 end:1617509554424 time:1572915
+[INFO][Main] ->  Started Deinit start:1617509554431
+[INFO][DerbyDbService] ->  Released Connection
+[INFO][DerbyDbService] ->  No Connection to release
+[INFO][Main] ->  Finished Deinit start:1617509554431 end:1617509554436 time:5
+[INFO][Main] ->  Finished Total start:1617507979281 end:1617509554436 time:1575155
+[INFO][Main] ->  {
+  Total: { start: 1617507979281, end: 1617509554436, time: 1575155 },
+  Init: { start: 1617507979358, end: 1617507981509, time: 2151 },
+  Writing: { start: 1617507981509, end: 1617509554424, time: 1572915 },
+  Deinit: { start: 1617509554431, end: 1617509554436, time: 5 }
+}

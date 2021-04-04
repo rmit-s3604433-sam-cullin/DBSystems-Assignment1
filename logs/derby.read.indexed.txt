@@ -1,0 +1,44 @@
+root@4721de6f59a2:/app# dbrunner query -s derby -o -b 100
+[INFO][Main] ->  Started Total start:1617509714686
+[INFO][DataFile] ->  Creating Data Source ./data.csv
+[INFO][Main] ->  Started Init start:1617509714756
+[INFO][DerbyDbService] ->  Init Connection  DerbyServiceConfig {
+  optimize: true,
+  url: 'jdbc:derby://derby_db:1527/',
+  dbName: 'test',
+  tableName: 'testing',
+  derbyDrivers: [
+    '/db-derby-10.14.2.0-bin/lib/derby.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbytools.jar',
+    '/db-derby-10.14.2.0-bin/lib/derbyclient.jar'
+  ]
+}
+[INFO][DerbyDbService] ->  Successfully Connected
+[INFO][DerbyDbService] ->  Opened Connection  014c46ff-4774-4e6a-aad8-e223000b7279
+[INFO][DerbyDbService] ->  Created table
+[INFO][Main] ->  Finished Init start:1617509714756 end:1617509715075 time:319
+[INFO][Main] ->  Started Query start:1617509715076
+[INFO][Main] ->  Result {
+  ID: 23413,
+  DATETIME: '06/29/2009 02:00:00 PM',
+  MYEAR: 2009,
+  MDATE: 29,
+  MMONTH: 'June',
+  DAY: 'Monday',
+  TIME: 14,
+  SENSORID: 16,
+  SENSORNAME: 'Australia on Collins',
+  HOURLYCOUNT: 1958
+}
+[INFO][Main] ->  Finished Query start:1617509715076 end:1617509715129 time:53
+[INFO][Main] ->  Started Deinit start:1617509715130
+[INFO][DerbyDbService] ->  Released Connection
+[INFO][DerbyDbService] ->  No Connection to release
+[INFO][Main] ->  Finished Deinit start:1617509715130 end:1617509715132 time:2
+[INFO][Main] ->  Finished Total start:1617509714686 end:1617509715132 time:446
+[INFO][Main] ->  {
+  Total: { start: 1617509714686, end: 1617509715132, time: 446 },
+  Init: { start: 1617509714756, end: 1617509715075, time: 319 },
+  Query: { start: 1617509715076, end: 1617509715129, time: 53 },
+  Deinit: { start: 1617509715130, end: 1617509715132, time: 2 }
+}

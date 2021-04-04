@@ -1,16 +1,6 @@
 ➜ docker exec -it dbrunner bash        
 root@492d19ef1869:/app# dbrunner query -s derby
 [INFO][Main] ->  Started Total start:1617455409056
-[INFO][DerbyDbService] ->  DerbyServiceConfig {
-  url: 'jdbc:derby://derby_db:1527/',
-  dbName: 'test',
-  tableName: 'testing',
-  derbyDrivers: [
-    '/db-derby-10.14.2.0-bin/lib/derby.jar',
-    '/db-derby-10.14.2.0-bin/lib/derbytools.jar',
-    '/db-derby-10.14.2.0-bin/lib/derbyclient.jar'
-  ]
-}
 [INFO][DataFile] ->  Creating Data Source ./data.csv
 [INFO][Main] ->  Started Init start:1617455409150
 [INFO][DerbyDbService] ->  Init Connection  DerbyServiceConfig {
