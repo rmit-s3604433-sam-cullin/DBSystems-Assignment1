@@ -1,8 +1,8 @@
-import java.nio.ByteBuffer;
-import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 
 
@@ -36,7 +36,7 @@ public class dbquery implements dbimpl
             size = Integer.valueOf(args[1]);
          }
       }
-      
+      System.out.println("Finding name["+name+"] in heap["+size+"]");
       readHeap(name, size);
    }
 
@@ -66,6 +66,7 @@ public class dbquery implements dbimpl
       int rid = 0;
       boolean isNextPage = true;
       boolean isNextRecord = true;
+      System.out.println("Starting Search ");
       try
       {
          FileInputStream fis = new FileInputStream(heapfile);
@@ -75,6 +76,7 @@ public class dbquery implements dbimpl
             byte[] bPageNum = new byte[intSize];
             fis.read(bPage, 0, pagesize);
             System.arraycopy(bPage, bPage.length-intSize, bPageNum, 0, intSize);
+            System.out.println("Loaded Page "+ pageCount);
 
             isNextRecord = true;
             while (isNextRecord)
@@ -88,11 +90,13 @@ public class dbquery implements dbimpl
                   rid = ByteBuffer.wrap(bRid).getInt();
                   if (rid != recCount)
                   {
+                      System.out.println("Stopping Search");
                      isNextRecord = false;
                   }
                   else
                   {
                      String dto = entity.deserialize(bRecord);
+                     System.out.println(dto);
                       if(dto.toLowerCase().contains(name.toLowerCase())){
                           System.out.println(dto);
                       }
@@ -106,6 +110,7 @@ public class dbquery implements dbimpl
                   recordLen = 0;
                   recCount = 0;
                   rid = 0;
+                  System.out.println("Error Index Out of range");
                }
             }
             if (ByteBuffer.wrap(bPageNum).getInt() != pageCount)
@@ -159,11 +164,13 @@ public class dbquery implements dbimpl
                   rid = ByteBuffer.wrap(bRid).getInt();
                   if (rid != recCount)
                   {
+                      System.out.println("Bailed on rid "+ rid);
                      isNextRecord = false;
                   }
                   else
                   {
                       String dto = entity.deserialize(bRecord);
+                      System.out.println(dto);
                       if(dto.toLowerCase().contains(name.toLowerCase())){
                           System.out.println(dto);
                       }
@@ -177,6 +184,7 @@ public class dbquery implements dbimpl
                   recordLen = 0;
                   recCount = 0;
                   rid = 0;
+                  System.out.println("ArrayIndexOutOfBoundsException");
                }
             }
             if (ByteBuffer.wrap(bPageNum).getInt() != pageCount)

@@ -1,5 +1,4 @@
-import java.io.*;
-import java.util.*;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 
@@ -94,7 +93,7 @@ public class dbentity {
         //System.out.println("copyInt("+entry+","+size+","+OFFSET+")");
         bBuffer.putInt(entry);
         byte[] DATA = bBuffer.array();
-        
+        System.out.println("Writing Int "+ DATA.length);
         System.arraycopy(DATA, 0, rec, OFFSET, size);
     }
     
@@ -122,7 +121,7 @@ public class dbentity {
     throws UnsupportedEncodingException
     {
         byte[] OUT = new byte[size];
-        System.arraycopy(record, offset , OUT, size, size);
+        System.arraycopy(record, offset , OUT, 0, size);
         int num = ByteBuffer.wrap(OUT).getInt();
         return num;
     }
@@ -139,17 +138,29 @@ public class dbentity {
     String deserialize(byte[] record)
         throws UnsupportedEncodingException
     {
+        System.out.println("Deserializing "+ record.length + " " + dbentity.RECORD_SIZE);
         int    RID        = readInt(    record, RID_SIZE         ,  RID_OFFSET        );
+        System.out.println("Loaded RID "+ RID);
         int    ID         = readInt(    record, ID_SIZE          ,  ID_OFFSET         );
+        System.out.println("Loaded ID "+ ID);
         String DATETIME   = readString( record, DATETIME_SIZE    ,  DATETIME_OFFSET   );
+        System.out.println("Loaded DATETIME "+ DATETIME);
         int    YEAR       = readInt(    record, YEAR_SIZE        ,  YEAR_OFFSET       );
+        System.out.println("Loaded YEAR "+ YEAR);
         String MONTH      = readString( record, MONTH_SIZE       ,  MONTH_OFFSET      );
+        System.out.println("Loaded MONTH "+ MONTH);
         int    MDATE      = readInt(    record, MDATE_SIZE       ,  MDATE_OFFSET      );
+        System.out.println("Loaded MDATE "+ MDATE);
         String DAY        = readString( record, DAY_SIZE         ,  DAY_OFFSET        );
+        System.out.println("Loaded DAY "+ DAY);
         int    TIME       = readInt(    record, TIME_SIZE        ,  TIME_OFFSET       );
+        System.out.println("Loaded TIME "+ TIME);
         int    SENSORID   = readInt(    record, SENSORID_SIZE    ,  SENSORID_OFFSET   );
+        System.out.println("Loaded SENSORID "+ SENSORID);
         String SENSORNAME = readString( record, SENSORNAME_SIZE  ,  SENSORNAME_OFFSET );
+        System.out.println("Loaded SENSORNAME "+ SENSORNAME);
         int    HOURLYCOUNT= readInt(    record, HOURLYCOUNT_SIZE ,  HOURLYCOUNT_OFFSET);
+        System.out.println("Loaded HOURLYCOUNT "+ HOURLYCOUNT);
 
         return String.format("%d, %d, %s, %d, %s, %d, %s, %d, %d, %s, %d",
                  RID
