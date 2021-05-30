@@ -186,7 +186,6 @@ public class dbLeafNode<TKey extends Comparable<TKey> & Idbentity<TKey>, TValue 
         return (dbLeafNode<TKey,TValue>) this.clone();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public byte[] serialize() throws UnsupportedEncodingException {
         byte[] DATA = new byte[this.getSize()];

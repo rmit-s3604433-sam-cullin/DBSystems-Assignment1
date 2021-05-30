@@ -276,7 +276,6 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey
 
 
 
-    @SuppressWarnings("unchecked")
     @Override
     public byte[] serialize() throws UnsupportedEncodingException {
         byte[] DATA = new byte[this.getSize()];

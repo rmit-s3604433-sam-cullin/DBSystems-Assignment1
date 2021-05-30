@@ -2,7 +2,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import bTree.bTreeDB;
 import bTree.bTreeRoot;
 import dbstore.dbBytePage;
 import entity.dbEntityLoader;
@@ -47,7 +46,6 @@ public class dbindex {
  
     }
 
-
     public void run(dbindexCli options){
         dbStringIndexKey.STRING_INDEX_KEY_SIZE = 38;
         //dbStringIndexKey keyType = new dbStringIndexKey("");
@@ -55,7 +53,7 @@ public class dbindex {
         dbIndexValue valueType = new dbIndexValue(0,0);
         bTreeRoot<dbIntIndexKey,dbIndexValue> rootNode = new bTreeRoot<dbIntIndexKey,dbIndexValue>(keyType, valueType);
 
-        bTreeDB<dbIntIndexKey,dbIndexValue> saver = new bTreeDB<dbIntIndexKey,dbIndexValue>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/index", 6 , rootNode);
+       // bTreeDB<dbIntIndexKey,dbIndexValue> saver = new bTreeDB<dbIntIndexKey,dbIndexValue>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/index", 6 , rootNode);
 
         dbEntityRow entityType = new dbEntityRow(); 
         dbBytePage<dbEntityRow> pageType = new dbBytePage<>(1024,entityType);
