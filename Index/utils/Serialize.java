@@ -56,10 +56,8 @@ public class Serialize {
      * @param size
      * @param OFFSET
      * @param rec
-     * @throws UnsupportedEncodingException
      */
     public static void integer(int entry, int size, int OFFSET, byte[] rec)
-            throws UnsupportedEncodingException 
     {
         byte[] DATA = Serialize.integer(entry, size);
         System.arraycopy(DATA, 0, rec, OFFSET, DATA.length);
@@ -70,10 +68,8 @@ public class Serialize {
      * @param entry
      * @param size
      * @return
-     * @throws UnsupportedEncodingException
      */
     public static byte[] integer(int entry, int size)
-            throws UnsupportedEncodingException 
     {
         ByteBuffer bBuffer =ByteBuffer.allocate(size);
         bBuffer.putInt(entry);

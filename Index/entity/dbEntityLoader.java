@@ -3,7 +3,9 @@ package entity;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import dbstore.dbBytePage;
 import dbstore.rafdb;
@@ -15,6 +17,8 @@ public class dbEntityLoader<TEntity extends dbStorable<TEntity>, TPage extends d
     public static class EntityIterator<TEntity extends dbStorable<TEntity>, TPage extends dbBytePage<TEntity>>
             implements Iterator<TEntity> {
         private dbEntityLoader<TEntity, TPage> loader;
+        private TEntity nextEntity;
+        private boolean doneloading = false;
 
         EntityIterator(dbEntityLoader<TEntity, TPage> loader) {
             this.loader = loader;
@@ -25,7 +29,7 @@ public class dbEntityLoader<TEntity extends dbStorable<TEntity>, TPage extends d
             dbEntityKey nextKey = this.loader.getNextKey();
             try {
                 this.loader.validateKey(nextKey);
-                return true;
+                return true && this.doneloading == false;
             } catch (Exception e) {
                 return false;
             }
@@ -35,10 +39,28 @@ public class dbEntityLoader<TEntity extends dbStorable<TEntity>, TPage extends d
         @Override
         public TEntity next() {
             try {
-                dbEntityKey key = this.loader.getNextKey();
-                TEntity entity = this.loader.findEntity(key);
-                this.loader.setLastKey(key);
+                dbEntityKey key;
+                TEntity entity;
+
+                if(nextEntity == null){
+                    key = this.loader.getNextKey();
+                    entity = this.loader.findEntity(key);
+                    this.loader.setLastKey(key);
+                    key =this.loader.getNextKey();
+                    this.nextEntity = this.loader.findEntity(key);
+                    this.loader.setLastKey(key);
+                }else{
+                    entity = this.nextEntity;
+                    key = this.loader.getNextKey();
+                    this.nextEntity = this.loader.findEntity(key);
+                    this.loader.setLastKey(key);
+                }
+                if(nextEntity.key.getPageId() != key.getPageId() && nextEntity.key.getRId() != key.getRId()){
+                    this.doneloading = true;
+                }
+                
                 return entity;
+
             } catch (Exception e) {
                 System.out.println("Error Loading Next Record From Entity Store");
                 System.out.println(e.toString());
@@ -86,12 +108,15 @@ public class dbEntityLoader<TEntity extends dbStorable<TEntity>, TPage extends d
     public long getPageIndex(dbEntityKey key) {
         return key.getIndex(this.pageType.getSize(), 0);
     }
-
+    public Map<dbEntityKey,TEntity> cache = new HashMap<>();
     public TEntity findEntity(dbEntityKey key) throws FileNotFoundException, IOException, Exception {
         this.validateKey(key);
+        if(this.cache.containsKey(key)){
+            return this.cache.get(key);
+        }
         byte[] RECORD = this.read(this.getIndex(key), this.entityType.getSize());
         TEntity dto = this.entityType.deserialize(RECORD);
-        dto.setKey(key);
+        this.cache.put(key, dto);
         return dto;
     }
 
@@ -149,7 +174,7 @@ public class dbEntityLoader<TEntity extends dbStorable<TEntity>, TPage extends d
 
     @Override
     public void close() {
-        if(this.cachedPage != null){
+        if(this.cachedPage != null && this.cachedPage.entities.size() > 0){
             try{
                 this.savePage(this.cachedPage);
 

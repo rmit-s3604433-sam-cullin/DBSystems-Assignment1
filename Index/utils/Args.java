@@ -13,13 +13,15 @@ public class Args {
         return new IncorrectArgs("Error Param["+key.toString()+"] ->"+ message);
     }
 
-    public static class ArgOptions<T> {
+    public abstract static class ArgOptions<T> {
         String flag = null;
         int index = -1;
         String message = null;
         T defaultVal = null;
         boolean require = false;
         boolean isBool = false;
+
+        abstract public T Load(String[] args) throws IncorrectArgs;
 
         public ArgOptions<T> required(){
             this.require = true;
@@ -46,6 +48,7 @@ public class Args {
             return this;
         }
 
+
         public IncorrectArgs getError(){
             return Error(this.getIndex(), this.message);
         }
@@ -63,53 +66,53 @@ public class Args {
         throws IncorrectArgs
     {
         int index = -1;
-        if(options.flag != null){ index = Arrays.asList(args).indexOf(options.flag); }
+        if(options.flag != null){ 
+            index = Arrays.asList(args).indexOf(options.flag);
+            index = index == -1 ? index : index +1; 
+        }
         if(options.index > -1 && index == -1){ index = options.index; }
 
         if(index == -1 && options.defaultVal != null ){ return null; } // Item not found but there is default value
         if(options.require == false) { return null; } // Not required
-        if(index == -1 || index + 1 > args.length){ throw options.getError(); } // Item not found or 
+        if(index == -1 || index + 1 > args.length){ 
+            if(options.defaultVal != null){ return null; }
+            options.getError(); 
+        } // Item not found or 
         return args[index];
 
     } 
 
-    public static class StringArg {
-        ArgOptions<String> options;
-        StringArg(ArgOptions<String> options){
-            this.options = options;
-        }
+    public static class StringArg extends ArgOptions<String> {
 
-        String Load(String[] args)
+        @Override
+        public String Load(String[] args)
             throws IncorrectArgs
         {
-            String arg = getArg(args, this.options);
-            if(arg == null && this.options != null){
-                return this.options.defaultVal;
+            String arg = getArg(args, this);
+            if(arg == null && this != null){
+                return this.defaultVal;
             }
             return arg;
         }
         
     }
 
-    public static class IntArg {
-        ArgOptions<Integer> options;
-        IntArg(ArgOptions<Integer> options){
-            this.options = options;
-        }
+    public static class IntArg extends ArgOptions<Integer> {
 
-        Integer Load(String[] args)
+        @Override
+        public Integer Load(String[] args)
         throws IncorrectArgs
         {
-            String argS = getArg(args, this.options);
+            String argS = getArg(args, this);
             Integer arg = null;
             if(argS != null){
                 try{
                     arg = Integer.parseInt(argS);
                 }catch(NumberFormatException e){
-                    throw Error(this.options.getIndex(), "Incorrect Type Must be Int");
+                    throw Error(this.getIndex(), "Incorrect Type Must be Int");
                 }
-            }else if(this.options.defaultVal != null){
-                arg = this.options.defaultVal;
+            }else if(this.defaultVal != null){
+                arg = this.defaultVal;
             }
             return arg;
         }

@@ -30,6 +30,13 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey
 
 
 	public int getKeyCount() {
+        if(this.keyCount == -1){
+            this.keyCount = 0;
+            for(Object key: this.keys){
+                if(key == null){ return this.keyCount; }
+                this.keyCount += 1;
+            }
+        }
 		return this.keyCount;
 	}
 	
@@ -227,13 +234,26 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey
         if(isNull) { return null; }
         dbIndexNode<TKey,TValue> dto = null;
         if(nodeType == TreeNodeType.LeafNode){
-            dto = new dbLeafNode<TKey, TValue>(this.keyType, this.valueType); 
+            if(this.loader.leafStore.cache.containsKey(key)){
+                dto = this.loader.leafStore.cache.get(key);
+            }else{
+                dto = new dbLeafNode<TKey, TValue>(this.keyType, this.valueType);
+                dto.key = key;
+                dto.loader = this.loader;
+                dto.isLoaded = false; 
+                this.loader.leafStore.cache.put(key, dto);
+            }
         }else if(nodeType == TreeNodeType.InnerNode){
-            dto = new dbInnerNode<TKey, TValue>(this.keyType, this.valueType);
+            if(this.loader.innerStore.cache.containsKey(key)){
+                dto = this.loader.innerStore.cache.get(key);
+            }else{
+                dto = new dbInnerNode<TKey, TValue>(this.keyType, this.valueType);
+                dto.key = key;
+                dto.loader = this.loader;
+                dto.isLoaded = false; 
+                this.loader.innerStore.cache.put(key, dto);
+            }   
         }
-        dto.key = key;
-        dto.loader = this.loader;
-        dto.isLoaded = false;
         return dto;
     };
 
@@ -275,14 +295,14 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey
     protected boolean deserializeNullCheck(byte[] rec, int offset)
         throws UnsupportedEncodingException
     {
-        int val = Deserialize.integer(rec, 4, offset);
+        int val = Deserialize.integer(rec, NODE_NULL_CHECK_SIZE, offset + NODE_NULL_CHECK_OFFSET);
         return val == 0;
     }
     protected TreeNodeType deserializeNodeType(byte[] rec, int offset)
         throws UnsupportedEncodingException
     {
         return TreeNodeType.fromInt(
-            Deserialize.integer(rec, 4, offset)
+            Deserialize.integer(rec, NODE_TYPE_SIZE, offset + NODE_TYPE_OFFSET)
         );
     }
 
@@ -290,7 +310,7 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey
         throws UnsupportedEncodingException
     {
         return new dbEntityKey().deserialize(
-            Deserialize.bytes(rec, dbEntityKey.CONTENT_SIZE, 4+ offset)
+            Deserialize.bytes(rec, NODE_LOOKUP_SIZE, offset + NODE_LOOKUP_OFFSET)
         );
     }
 
@@ -303,12 +323,12 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey
             this.deserializeNodeType(DATA, PARENT_NODE_OFFSET)
         );
         this.leftSibling = this.initialize(
-            this.deserializeNullCheck(DATA, PARENT_NODE_OFFSET),
+            this.deserializeNullCheck(DATA, LEFT_SIBLING_OFFSET),
             this.deserializeLookupKey(DATA, LEFT_SIBLING_OFFSET),
             this.deserializeNodeType(DATA, LEFT_SIBLING_OFFSET)
         );
         this.rightSibling = this.initialize(
-            this.deserializeNullCheck(DATA, PARENT_NODE_OFFSET),
+            this.deserializeNullCheck(DATA, RIGHT_SIBLING_OFFSET),
             this.deserializeLookupKey(DATA, RIGHT_SIBLING_OFFSET),
             this.deserializeNodeType(DATA, RIGHT_SIBLING_OFFSET)
         );
@@ -316,7 +336,9 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey
             Deserialize.bytes(DATA, this.keyListSize(), KEYS_OFFSET), 
             this.keyType
         ); 
-        
+        this.keyCount = -1;
+        this.keyCount = this.getKeyCount();
+
         return (dbIndexNode<TKey,TValue>) this.clone();
     }
 
@@ -333,6 +355,8 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey
         " ,keyCount:"+this.keyCount+""+
         "}";
     }
+
+    public abstract String detailedJsonString();
 
     @Override
     public boolean equals(Object obj) {

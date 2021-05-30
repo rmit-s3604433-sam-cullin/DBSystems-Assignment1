@@ -176,6 +176,10 @@ Query Logs: [./logs/derby.query.indexed.txt](./logs/derby.query.indexed.txt)
 
 The RW Ratios the influence the index has depending on how many read vs write requests you are planning to make. From this, we can see that if you plan to make 500 read requests to every write request then it is still not worth including an index. As the average request would be 551ms slower with an index.
 
+## Adding Secondary Index
+
+TODO: Writing up of secondary Index
+
 
 # Task 2: MongoDB [./src/services/mongo.ts](./src/services/mongo.ts)
 
@@ -260,6 +264,39 @@ I tested reading and writing on several page sizes listed below.
 | RW 1000:1 Ratio ms |  6982  |  3238  |  1760  | 1214  |       764       |  617  |      456      |  503  | ***! 310 !*** |
 
 From the table above we can see that larger page sizes are better for performance however because of the shallow exploration in the heap implementation there are some advantages for smaller page sizes when it comes to indexing.  Having smaller page sizes would allow the index to find the record faster however there would be overhead maintaining the index on write operations. I would expect there to a large difference between the read and write time if an index was implemented. From the test, we have run on the mongo and derby databases. 
+
+
+## Adding a B+ Tree Index
+To create the B+ Tree I first created some helper class that could let me search through the heap using a `Random Access File` This allowed me to parse a dbLookUp key of `record Id` and `page Id` and it would load that record out of the file rather than scanning though the whole file. Once I had this I needed to start building the tree. I decided to have the keys as some value in from the csv and the values as a class containing the respective `record Id` and `page Id` to the heap file location. Which I could then use to lookup the records from the heap. To create the b tree I have three main classes `bTreeRoot.java`, `dbIndexNode.java`, `dbLeafNode.java` and `dbInnerNode.java`.
+
+#### bTreeRoot
+This class is responsible for initializing the bTree and handing actions that are preformed on the tree.
+
+#### dbIndexNode
+Is an abstract class that both the Leaf and Inner Node classes extends. This contains all the common functionality between the two node types.
+
+#### dbInnerNode
+These nodes contain children node which link to other dbInnerNods or dbLeafNodes.
+
+#### dbLeafNode
+These nodes contain values which are the lookup keys for the source heap file.
+
+
+### Serialization/De-Serialization
+Once the b+-tree had been filled with the records from the Heap we can then try to save the b tree to its heap file. This will mean we can build the index once and continue to use it in the future. To serialize the b+-Tree I created two Heap files, one for the inner nodes and the other for the leaf nodes. The reason I used two files, was because the Inner nodes and Leaf nodes have different sizes, and having them in separate files means I don't have to pad the smaller records. Another feature that I wanted to implement was to make it so a user of the index would not have to load the whole index into memory to use it. To do this, I changed how the serialization work, rather than each reference to another node being serialized within that node, I would only serialize the heap file reference `record Id` and `page Id`. I would then only need to load nodes from the index when they were required.
+
+Implementing this extra feature proved to be much more difficult than I first anticipated. I ran into many issues when trying to deserialize the heap index. The first issue what the de-serialization itself, it appeared that the offsets were off as I was getting byte-looking characters in some of the strings once they were deserialized. I narrowed down the bug to the de-serialization of the node references the offsets there were not correct after this the index heap could be loaded correctly, at least for the root node. When I tried to run a search on the root node however I received a java heap size exception. I realized the reference nodes that I was creating were all unique objects, so I started to implement a cache in the `dbIndexNodeLoader.java` that would create a new instance if it had not been loaded yet and return the instance if it had already been loaded. I was not able to see this through to completion though as I started to run out of time and I had not made a start on the other parts of the project. So I decided to leave the Index implementation as an in-memory index. 
+
+
+
+
+
+
+
+
+
+
+
 
 # All in Comparison
 Now that we have results for all the different DBs let's see how they stack up. We will use each database's best performance per RW Ratio. 

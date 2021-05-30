@@ -209,6 +209,10 @@ public class dbLeafNode<TKey extends Comparable<TKey> & Idbentity<TKey>, TValue 
     public String toString() {
         return String.format("(leaf) size: %d  id %s keys %s", this.getSize(), this.key.toString(), Serialize.arrayToString(this.keys, false));
     }
+    @Override
+    public String detailedJsonString() {
+        return Serialize.arrayToString(this.values, false);
+    }
 
     @Override
     public dbIndexNode<TKey, TValue> load() {

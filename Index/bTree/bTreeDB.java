@@ -12,15 +12,10 @@ public class bTreeDB<TKey extends Comparable<TKey> & Idbentity<TKey> , TValue ex
         super(datastorePath+".leaf.heap", datastorePath+".inner.heap", pageSize, root);
         this.root = root;
     }
-    public void setIds(){
-        dbIndexNode<TKey,TValue> root = this.root.getNode();
-        TreeNodeType type =root.getNodeType();
 
-    }
 
     public void save() throws UnsupportedEncodingException, IOException{
         Iterator<dbIndexNode<TKey,TValue>> iter = root.iterator();
-        int index = 0;
         while(iter.hasNext()){
             dbIndexNode<TKey,TValue> node = iter.next();
             
@@ -38,6 +33,7 @@ public class bTreeDB<TKey extends Comparable<TKey> & Idbentity<TKey> , TValue ex
     public void log(){
         bTreeStats<TKey,TValue> stats = root.stats();
         System.out.println(stats.toString());
+        System.out.println(stats.root.detailedJsonString());
         for(dbIndexNode<TKey,TValue> node: stats.nodes){
             int depth = stats.getDepth(node);
             String padding = "";

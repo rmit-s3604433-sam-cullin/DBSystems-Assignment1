@@ -60,7 +60,8 @@ public class bTreeRoot<TKey extends Comparable<TKey> & Idbentity<TKey> , TValue 
 	private dbLeafNode<TKey, TValue> findLeafNodeShouldContainKey(TKey key) {
 		dbIndexNode<TKey, TValue> node = this.root;
 		while (node.getNodeType() == TreeNodeType.InnerNode) {
-			node = ((dbInnerNode<TKey, TValue>)node).getChild( node.search(key) );
+            int nextNode = node.search(key);
+			node = ((dbInnerNode<TKey, TValue>)node).getChild(nextNode);
 		}
 		
 		return (dbLeafNode<TKey, TValue>)node;

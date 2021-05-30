@@ -7,7 +7,7 @@ import utils.Deserialize;
 import utils.Serialize;
 
 public class dbIntIndexKey implements Idbentity<dbIntIndexKey> , Comparable<dbIntIndexKey> {
-    private int value;
+    private Integer value;
     public dbIntIndexKey(int value){
         this.value = value;
     }
@@ -29,6 +29,6 @@ public class dbIntIndexKey implements Idbentity<dbIntIndexKey> , Comparable<dbIn
 
     @Override
     public int compareTo(dbIntIndexKey o) {
-        return this.value - o.value;
+        return this.value.compareTo(o.value);
     }
 }

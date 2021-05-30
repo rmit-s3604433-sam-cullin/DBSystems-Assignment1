@@ -1,12 +1,13 @@
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import bTree.bTreeDB;
 import bTree.bTreeRoot;
 import dbstore.dbBytePage;
 import entity.dbEntityLoader;
 import index.dbIndexValue;
+import index.dbIntIndexKey;
 import index.dbStringIndexKey;
 import utils.Args.IncorrectArgs;
 import utils.Cli;
@@ -49,33 +50,41 @@ public class dbindex {
 
     public void run(dbindexCli options){
         dbStringIndexKey.STRING_INDEX_KEY_SIZE = 38;
-        dbStringIndexKey keyType = new dbStringIndexKey("");
+        //dbStringIndexKey keyType = new dbStringIndexKey("");
+        dbIntIndexKey keyType = new dbIntIndexKey(0);
         dbIndexValue valueType = new dbIndexValue(0,0);
-        bTreeRoot<dbStringIndexKey,dbIndexValue> rootNode = new bTreeRoot<dbStringIndexKey,dbIndexValue>(keyType, valueType);
+        bTreeRoot<dbIntIndexKey,dbIndexValue> rootNode = new bTreeRoot<dbIntIndexKey,dbIndexValue>(keyType, valueType);
 
-        bTreeDB<dbStringIndexKey,dbIndexValue> saver = new bTreeDB<dbStringIndexKey,dbIndexValue>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/index", 6 , rootNode);
+        bTreeDB<dbIntIndexKey,dbIndexValue> saver = new bTreeDB<dbIntIndexKey,dbIndexValue>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/index", 6 , rootNode);
 
         dbEntityRow entityType = new dbEntityRow(); 
         dbBytePage<dbEntityRow> pageType = new dbBytePage<>(1024,entityType);
-        dbEntityLoader<dbEntityRow,dbBytePage<dbEntityRow>> loader = new dbEntityLoader<>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/heap.1024", pageType, entityType);
-
+        dbEntityLoader<dbEntityRow,dbBytePage<dbEntityRow>> loader = new dbEntityLoader<>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/1024.heap", pageType, entityType);
+        Map<Integer,Integer> cache = new HashMap<>(); 
         try{
             loader.connect();
-
+            System.out.println("Loading Index");
+            long indexBuildStart = System.currentTimeMillis();
             Iterator<dbEntityRow> rows = loader.iterator();
-            int index = 0;
             while(rows.hasNext()){
                 dbEntityRow tmpRow = rows.next();
-                System.out.println(index + tmpRow.toString());
-                index += 1;
-                dbStringIndexKey tmpKey = new dbStringIndexKey(tmpRow.sensorName);
-                dbIndexValue tmpLocation = new dbIndexValue(tmpRow.getKey());
-                rootNode.insert(tmpKey, tmpLocation);
+                if(!cache.containsKey(tmpRow.id)){
+                    dbIntIndexKey tmpKey = new dbIntIndexKey(tmpRow.id);
+                    dbIndexValue tmpLocation = new dbIndexValue(tmpRow.getKey());
+                    rootNode.insert(tmpKey, tmpLocation);
+                    cache.put(tmpRow.id, 1);
+                }else{
+                    System.out.println("Non Unique Not adding to heap"+tmpRow.id);
+                }
+                
             }
+            long indexBuildEnd = System.currentTimeMillis();
+            cache = null;
+            System.out.println("Index Build time: " + (indexBuildEnd - indexBuildStart) + "ms");
         }catch(Exception e){
             e.printStackTrace();
         }finally{
-            loader.close();
+            
         }
        
 
@@ -83,15 +92,28 @@ public class dbindex {
 
 
         try {
-            System.out.println("Saving");
-            saver.connect();
-            saver.save();
-            saver.close();
-            saver.log();
+            System.out.println("Retrieving ID "+ 2888153);
+            
+            long startTime = System.currentTimeMillis();
+            dbIndexValue result = rootNode.search(
+                new dbIntIndexKey(2888153)
+            );
+            long indexSearch = System.currentTimeMillis();
+            dbEntityRow row = loader.findEntity(result.getKey());
+            long heapSearch = System.currentTimeMillis();
+            System.out.println(String.format("Index Query Time: %d\nHeap Query Time: %d\nTotal Query Time:%d", (indexSearch-startTime), (heapSearch-indexSearch),(heapSearch-startTime)));
+            
+
+            System.out.println(result);
+            System.out.println(row.toString());
+
+            // saver.connect();
+            // saver.save();
+            // saver.close();
+            // loader.close();
+            // saver.log();
             //System.out.println("RootNodeKey:"+rootNode.getNode().toJsonString());
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         

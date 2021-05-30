@@ -4,6 +4,7 @@ import bTree.dbIndexNode;
 import bTree.dbInnerNode;
 import entity.dbEntityKey;
 import index.dbIndexValue;
+import index.dbIntIndexKey;
 import index.dbStringIndexKey;
 import utils.Args.IncorrectArgs;
 import utils.Cli;
@@ -46,12 +47,12 @@ public class dbquery {
 
     public void run(dbqueryCli options){
         dbStringIndexKey.STRING_INDEX_KEY_SIZE = 38;
-        dbStringIndexKey keyType = new dbStringIndexKey("");
+        dbIntIndexKey keyType = new dbIntIndexKey(0);
         dbIndexValue valueType = new dbIndexValue(0,0);
-        bTreeRoot<dbStringIndexKey,dbIndexValue> rootNode = new bTreeRoot<dbStringIndexKey,dbIndexValue>(keyType, valueType);
+        bTreeRoot<dbIntIndexKey,dbIndexValue> rootNode = new bTreeRoot<dbIntIndexKey,dbIndexValue>(keyType, valueType);
        
 
-        bTreeDB<dbStringIndexKey,dbIndexValue> db = new bTreeDB<dbStringIndexKey,dbIndexValue>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/index", 6 , rootNode);
+        bTreeDB<dbIntIndexKey,dbIndexValue> db = new bTreeDB<dbIntIndexKey,dbIndexValue>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/index", 6 , rootNode);
 
 
     
@@ -63,14 +64,20 @@ public class dbquery {
         try {
             System.out.println("Loading");
             db.connect();
-            dbIndexNode<dbStringIndexKey,dbIndexValue> root = new dbInnerNode<dbStringIndexKey,dbIndexValue>(keyType, valueType);
+            dbIndexNode<dbIntIndexKey,dbIndexValue> root = new dbInnerNode<dbIntIndexKey,dbIndexValue>(keyType, valueType);
             root.initializeLoad(new dbEntityKey(0, 0), db);
             root.load();
             System.out.println(root.toJsonString());
             
             rootNode.setRoot(root);
 
-            db.log();
+
+
+            dbIndexValue result = rootNode.search(
+                new dbIntIndexKey(2888153)
+            );
+
+            System.out.println(result);
 
 
         } catch (Exception e ){

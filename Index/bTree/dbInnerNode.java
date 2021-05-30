@@ -41,7 +41,9 @@ public class dbInnerNode<TKey extends Comparable<TKey> & Idbentity<TKey>, TValue
 	@Override
 	public int search(TKey key) {
 		int index = 0;
-		for (index = 0; index < this.getKeyCount(); ++index) {
+        int keyCount = this.getKeyCount();
+		for (index = 0; index + 1 < keyCount;) {
+            
 			int cmp = this.getKey(index).compareTo(key);
 			if (cmp == 0) {
 				return index + 1;
@@ -49,6 +51,7 @@ public class dbInnerNode<TKey extends Comparable<TKey> & Idbentity<TKey>, TValue
 			else if (cmp > 0) {
 				return index;
 			}
+            index++;
 		}
 		
 		return index;
@@ -288,6 +291,12 @@ public class dbInnerNode<TKey extends Comparable<TKey> & Idbentity<TKey>, TValue
     @Override
     public String toString() {
         return String.format("(inner) size: %d  key %s ", this.getSize(), this.key.toString());
+    }
+
+    @Override
+    public String detailedJsonString() {
+        return Serialize.arrayToString(this.children, false);
+
     }
 
     @SuppressWarnings("unchecked")
