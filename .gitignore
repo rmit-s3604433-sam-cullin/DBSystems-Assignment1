@@ -3,6 +3,7 @@
 bin
 node_modules
 Heap/data
+Index/data
 *.class
 *.csv
 *.tar.gz
