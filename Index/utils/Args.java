@@ -48,6 +48,15 @@ public class Args {
             return this;
         }
 
+        @Override
+        public String toString() {
+            if(this.flag != null){
+                return String.format("%s [%s] %s", this.flag.toString(), this.defaultVal.toString(), this.message);
+            }else{
+                return String.format("%d [%s] %s", this.index, this.defaultVal.toString(), this.message);
+            }
+        }
+
 
         public IncorrectArgs getError(){
             return Error(this.getIndex(), this.message);

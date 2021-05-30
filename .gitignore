@@ -9,3 +9,4 @@ Index/data
 *.tar.gz
 *.zip
 tmp
+*.heap

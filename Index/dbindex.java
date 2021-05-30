@@ -1,14 +1,14 @@
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import bTree.bTreeRoot;
 import dbstore.dbBytePage;
 import entity.dbEntityLoader;
 import index.dbIndexValue;
 import index.dbIntIndexKey;
-import index.dbStringIndexKey;
+import utils.Args.ArgOptions;
 import utils.Args.IncorrectArgs;
+import utils.Args.IntArg;
+import utils.Args.StringArg;
 import utils.Cli;
 
 public class dbindex {
@@ -17,20 +17,34 @@ public class dbindex {
     
 
     public static class dbindexCli extends Cli {
+        private ArgOptions<String> fileArg = new StringArg().required().index(2).defaultVal("./data/1024.heap").message("heap file to load");
+        private ArgOptions<Integer> pageSizeArg = new IntArg().required().flag("-p").defaultVal(1024).message("The Page size used in the heap file");
+
+        public String file;
+        public int pageSize;
+
         @Override
         protected String getHelp() {
-            return " dbindex [file] <options> ";
+            return " dbindex <options> [file] \n"+
+            this.fileArg.toString() + "\n"+
+            this.pageSizeArg.toString() + "\n";
         }
 
         @Override
         protected void loadArgs(String[] args) throws IncorrectArgs {
-
+            this.file = this.fileArg.Load(args);
+            this.pageSize = this.pageSizeArg.Load(args);
+        }
+        @Override
+        public String toString() {
+            return String.format("file: %s pageSize: %d", this.file, this.pageSize);
         }
     }
     public static void main(String args[])
     {
         dbindexCli cli = new dbindexCli();
         cli.Load(args);
+        System.out.println(cli.toString());
 
         dbindex indexMain = new dbindex();
         try{
@@ -47,18 +61,13 @@ public class dbindex {
     }
 
     public void run(dbindexCli options){
-        dbStringIndexKey.STRING_INDEX_KEY_SIZE = 38;
-        //dbStringIndexKey keyType = new dbStringIndexKey("");
         dbIntIndexKey keyType = new dbIntIndexKey(0);
         dbIndexValue valueType = new dbIndexValue(0,0);
         bTreeRoot<dbIntIndexKey,dbIndexValue> rootNode = new bTreeRoot<dbIntIndexKey,dbIndexValue>(keyType, valueType);
 
-       // bTreeDB<dbIntIndexKey,dbIndexValue> saver = new bTreeDB<dbIntIndexKey,dbIndexValue>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/index", 6 , rootNode);
-
         dbEntityRow entityType = new dbEntityRow(); 
-        dbBytePage<dbEntityRow> pageType = new dbBytePage<>(1024,entityType);
-        dbEntityLoader<dbEntityRow,dbBytePage<dbEntityRow>> loader = new dbEntityLoader<>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/1024.heap", pageType, entityType);
-        Map<Integer,Integer> cache = new HashMap<>(); 
+        dbBytePage<dbEntityRow> pageType = new dbBytePage<>(options.pageSize,entityType);
+        dbEntityLoader<dbEntityRow,dbBytePage<dbEntityRow>> loader = new dbEntityLoader<>(options.file, pageType, entityType);
         try{
             loader.connect();
             System.out.println("Loading Index");
@@ -66,18 +75,11 @@ public class dbindex {
             Iterator<dbEntityRow> rows = loader.iterator();
             while(rows.hasNext()){
                 dbEntityRow tmpRow = rows.next();
-                if(!cache.containsKey(tmpRow.id)){
-                    dbIntIndexKey tmpKey = new dbIntIndexKey(tmpRow.id);
-                    dbIndexValue tmpLocation = new dbIndexValue(tmpRow.getKey());
-                    rootNode.insert(tmpKey, tmpLocation);
-                    cache.put(tmpRow.id, 1);
-                }else{
-                    System.out.println("Non Unique Not adding to heap"+tmpRow.id);
-                }
-                
+                dbIntIndexKey tmpKey = new dbIntIndexKey(tmpRow.id);
+                dbIndexValue tmpLocation = new dbIndexValue(tmpRow.getKey());
+                rootNode.insert(tmpKey, tmpLocation); 
             }
             long indexBuildEnd = System.currentTimeMillis();
-            cache = null;
             System.out.println("Index Build time: " + (indexBuildEnd - indexBuildStart) + "ms");
         }catch(Exception e){
             e.printStackTrace();
