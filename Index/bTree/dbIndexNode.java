@@ -9,8 +9,8 @@ import utils.Deserialize;
 import utils.Serialize;
 
 public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey> , TValue extends Idbentity<TValue>>  extends dbEntity<dbIndexNode<TKey,TValue>> {
-    protected final static int LEAFORDER = 4;
-    protected final static int INNERORDER = 4;
+    protected final static int LEAFORDER = 3500;
+    protected final static int INNERORDER = 3500;
     protected final static int KEY_SIZE = INNERORDER + 1;
     protected final static int CHILDREN_SIZE = INNERORDER + 2;
     protected final static int VALUE_SIZE = KEY_SIZE;

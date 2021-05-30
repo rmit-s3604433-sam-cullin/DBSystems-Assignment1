@@ -269,27 +269,81 @@ From the table above we can see that larger page sizes are better for performanc
 ## Adding a B+ Tree Index
 To create the B+ Tree I first created some helper class that could let me search through the heap using a `Random Access File` This allowed me to parse a dbLookUp key of `record Id` and `page Id` and it would load that record out of the file rather than scanning though the whole file. Once I had this I needed to start building the tree. I decided to have the keys as some value in from the csv and the values as a class containing the respective `record Id` and `page Id` to the heap file location. Which I could then use to lookup the records from the heap. To create the b tree I have three main classes `bTreeRoot.java`, `dbIndexNode.java`, `dbLeafNode.java` and `dbInnerNode.java`.
 
-#### bTreeRoot
-This class is responsible for initializing the bTree and handing actions that are preformed on the tree.
-
-#### dbIndexNode
-Is an abstract class that both the Leaf and Inner Node classes extends. This contains all the common functionality between the two node types.
-
-#### dbInnerNode
-These nodes contain children node which link to other dbInnerNods or dbLeafNodes.
-
-#### dbLeafNode
-These nodes contain values which are the lookup keys for the source heap file.
-
 
 ### Serialization/De-Serialization
 Once the b+-tree had been filled with the records from the Heap we can then try to save the b tree to its heap file. This will mean we can build the index once and continue to use it in the future. To serialize the b+-Tree I created two Heap files, one for the inner nodes and the other for the leaf nodes. The reason I used two files, was because the Inner nodes and Leaf nodes have different sizes, and having them in separate files means I don't have to pad the smaller records. Another feature that I wanted to implement was to make it so a user of the index would not have to load the whole index into memory to use it. To do this, I changed how the serialization work, rather than each reference to another node being serialized within that node, I would only serialize the heap file reference `record Id` and `page Id`. I would then only need to load nodes from the index when they were required.
 
 Implementing this extra feature proved to be much more difficult than I first anticipated. I ran into many issues when trying to deserialize the heap index. The first issue what the de-serialization itself, it appeared that the offsets were off as I was getting byte-looking characters in some of the strings once they were deserialized. I narrowed down the bug to the de-serialization of the node references the offsets there were not correct after this the index heap could be loaded correctly, at least for the root node. When I tried to run a search on the root node however I received a java heap size exception. I realized the reference nodes that I was creating were all unique objects, so I started to implement a cache in the `dbIndexNodeLoader.java` that would create a new instance if it had not been loaded yet and return the instance if it had already been loaded. I was not able to see this through to completion though as I started to run out of time and I had not made a start on the other parts of the project. So I decided to leave the Index implementation as an in-memory index. 
 
+### New Files
+All the new files for this implementation are located under the `./Index` 
 
-
-
+- Index
+  - bTree
+    - bTreeDB.java
+      - This class extends the dbIndexNodeLoader and contains the functionality for scanning over the whole tree and saving each node to the file. It also is used for some debugging when scanning of the tree.
+    - bTreeRoot.java
+      - This class is responsible for initializing the bTree and handing actions that are preformed on the tree.
+    - bTreeStats.java
+      - This class was used for debugging the tree as its hard to tell what exactly is going on sometimes. This object get parsing recursively down through the nodes and each of the nodes then adds itself to the bTreeStats class. Onces all the nodes have been added it is much easer to loop over all the nodes and find ones that are not doing what they are supposed to be doing.
+    - dbIndexNode.java
+      - Is an abstract class that both the Leaf and Inner Node classes extends. This contains all the common functionality between the two node types.
+    - dbIndexNodeLoader.java
+      - This abstracts out the fact that there are two heap files exposing a save and read function for each of the node types and sending those requests to the corresponding `dbEntityLoader.java` class.
+    - dbInnerNode.java
+      - These nodes contain children node which link to other dbInnerNods or dbLeafNodes.
+    - dbLeafNode.java
+      - These nodes contain values which are the lookup keys for the source heap file.
+    - TreeNodeType.java
+      - This file is an enum that defines the different types of nodes that are included in the b+-tree it also includes function for converting to and from an int for serialization/de-serialization.
+  - dbstore
+    - dbBytePage.java
+      - This class is responsable for storing an array of Idbentities which it can serialize and deserialize. This page's byte size is defined by the number of bytes provided when constructed.
+    - dbQntPage.java
+      - This class extends `dbBytePage` but is provided an quantity of items you want to store on a page rather than the number of bytes. 
+    - Idbentity.java
+      - This is an interface the defines serialize, deserialize and getSize.
+    - Idbkey.java
+      - This is an interface the defines getIndex which is used by the `rafdb` to seek that index in the file.
+    - IdbStoreable.java
+      - This is an interface that extends both `Idbentity` and `Idbkey` which is everything that is required to store an item in the `rafdb`.
+    - dbStoreable.java
+      - This is an abstract implementation of the IdbStorable interface providing common functions that will normally be common across implementation of the interface.
+    - rafdb.java
+      - This is a wrapper around a Random Access File that tries to imitate a db client. Having functions like connect and close.
+      - The reason I chose to Random Access File was because I new onces I had the index I would be able to jump to the correct byte and start reading the record. Which was perfect for a raf.
+  - entity
+    - dbEntity.java
+      - This is the base class for the dbEntityLoader new entities will be able to extend this class and implement the abstract methods to use functionality of the dbEntityLoader.
+    - dbEntityKey.java
+      - This class contains the `pageId` and `recordId` as well as methods for serializing and deserializing the key.
+    - dbEntityLoader.java
+      - This class extends the rafdb and abstracts away the bytes[] that you need to use the raf this allows you to use the above class to interface with the rafdb. And includes functions like findEntity using a dbEntityKey and saveEntity using a dbEntity. This class also implements the Iteratable interface returning an iterator that lets you loop over all the dbEntities in the file.
+  - index
+    - dbIndexValue.java
+      - This class is holds the `dbEntityKey` to find the indexed record in the heap file. This class follows all the required interfaces to be used as a value in the bTree.
+    - dbIntIndexKey.java
+      - This class hold a integer key and follows all the required interfaces to be used as a key in the bTree.
+    - dbStringIndexKey.java
+      - This class hold a string key and follows all the required interfaces to be used as a key in the bTree.
+  - utils
+    - Args.java
+      - This file contains classes to help build a cli tool in java most notable are the StringArg and IntArg classes.
+    - Cli.java
+      - This file contains an abstract class for a Cli this class will deserialize the args String[] into a cli options object. To do this it will utilize the classes from Args.java.
+    - Deserialize.java
+      - This is a static class that contains common deserializer functions to help convert Objects to byte[] data.
+    - Serialize.java
+      - This is a static class that contains common serializer function to help convert byte[] data to Objects.
+  - dbEntityRow.java
+    - This class extends the `dbEntity` class and contains specific deserializer and serializer functions for the csv data.
+  - dbindex.java
+    - This class will open the heap file and run over all records injecting them in to the index.
+    - Initially this file was going to also save the index to file to then be used by dbquery.
+  - dbload.java
+    - This is the same from version one however it has been updated to use the new `dbEntityLoader` to save the records to the heap.
+  - dbquery.java
+    - This file was initially going to load up the index files and query for a key in the index. Once the lookup key was retrieved from the index it would then look that key up in the heap to retrieve the full value.
 
 
 

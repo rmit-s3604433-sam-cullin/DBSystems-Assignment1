@@ -1,7 +1,5 @@
 package dbstore;
 
-import entity.dbStorable;
-
 public class dbQntPage<TEntity extends dbStorable<TEntity>> extends dbBytePage<TEntity> {
 
     public dbQntPage(int size, TEntity type) {

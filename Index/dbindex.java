@@ -90,27 +90,38 @@ public class dbindex {
 
 
         try {
-            System.out.println("Retrieving ID "+ 2888153);
+            int searchId;
+            long indexStart, indexEnd, indexTotal,
+                  heapStart, heapEnd, heapTotal = -1;
+            while(true){
+                searchId = options.readInteger("Enter id:");
+                System.out.println("Retrieving ID "+ searchId);
             
-            long startTime = System.currentTimeMillis();
-            dbIndexValue result = rootNode.search(
-                new dbIntIndexKey(2888153)
-            );
-            long indexSearch = System.currentTimeMillis();
-            dbEntityRow row = loader.findEntity(result.getKey());
-            long heapSearch = System.currentTimeMillis();
-            System.out.println(String.format("Index Query Time: %d\nHeap Query Time: %d\nTotal Query Time:%d", (indexSearch-startTime), (heapSearch-indexSearch),(heapSearch-startTime)));
-            
+                indexStart = System.currentTimeMillis();
+                dbIndexValue result = rootNode.search(
+                    new dbIntIndexKey(searchId)
+                );
+                indexEnd = System.currentTimeMillis();
+                indexTotal = (indexEnd - indexStart);
+                System.out.println(String.format("Index Query Time: %d", (indexTotal)));
+                if(result == null){
+                    System.out.println("No record found");
+                    continue;
+                }
 
-            System.out.println(result);
-            System.out.println(row.toString());
+                heapStart = System.currentTimeMillis();
+                dbEntityRow row = loader.findEntity(result.getKey());
+                heapEnd = System.currentTimeMillis();
+                heapTotal = (heapEnd - heapStart);
+                System.out.println(String.format("Heap Query Time: %d", (heapTotal)));
 
-            // saver.connect();
-            // saver.save();
-            // saver.close();
-            // loader.close();
-            // saver.log();
-            //System.out.println("RootNodeKey:"+rootNode.getNode().toJsonString());
+                System.out.println(String.format("Total Query Time:%d", (heapTotal + indexTotal)));
+                
+    
+                System.out.println(result);
+                System.out.println(row.toString());
+    
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,5 +1,7 @@
 package entity;
 
+import dbstore.dbStorable;
+
 public abstract class dbEntity<T> extends dbStorable<T> {
 
 

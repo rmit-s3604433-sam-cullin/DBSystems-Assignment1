@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import dbstore.dbBytePage;
+import dbstore.dbStorable;
 import dbstore.rafdb;
 
 public class dbEntityLoader<TEntity extends dbStorable<TEntity>, TPage extends dbBytePage<TEntity>> extends rafdb implements Iterable<TEntity> {
