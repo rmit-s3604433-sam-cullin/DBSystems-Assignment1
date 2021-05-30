@@ -38,6 +38,11 @@ public class dbEntityKey implements Idbentity<dbEntityKey> {
     public String toString() {
         return String.format("JSON(dbkey)=>{ \"rId\": %d , \"pageId\": %d }", this.rId, this.pageId);
     }
+    public String toJsonString(){
+        return String.format(
+            "{rId:%d,pageId:%d}"
+        , this.rId, this.pageId);
+    }
     @Override
     public int getSize() {
         return RID_SIZE + PID_SIZE;

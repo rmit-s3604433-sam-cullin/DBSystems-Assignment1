@@ -2,12 +2,12 @@ package bTree;
 
 import java.io.UnsupportedEncodingException;
 
-import dbstore.IdbStorable;
+import dbstore.Idbentity;
 import entity.dbEntity;
 import utils.Deserialize;
 import utils.Serialize;
 
-public class dbIndexElement<TKey extends Comparable<TKey> & IdbStorable<TKey> > extends dbEntity<dbIndexElement<TKey>> {
+public class dbIndexElement<TKey extends Comparable<TKey> & Idbentity<TKey> > extends dbEntity<dbIndexElement<TKey>> {
 
     public static final int LOOKUP_PID_SIZE = 4;
     public static final int LOOKUP_RID_SIZE = 4;

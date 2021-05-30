@@ -1,20 +1,28 @@
-package entity;
+package dbstore;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class dbPage<TEntity extends dbStorable<TEntity>> extends dbStorable<dbPage<TEntity>> {
+import entity.dbEntityKey;
+import entity.dbStorable;
+import utils.Serialize;
+
+public class dbBytePage<TEntity extends dbStorable<TEntity>> extends dbStorable<dbBytePage<TEntity>> {
     public List<TEntity> entities = new ArrayList<TEntity>();
     protected TEntity type;
     protected int size;
 
-    public dbPage(int size, TEntity type){
+    public dbBytePage(int size, TEntity type){
         super();
         this.type = type;
         this.size = size;
         
+    }
+    @Override
+    public Object clone() {
+        return new dbBytePage<TEntity>(this.size, this.type);
     }
 
     @Override
@@ -24,22 +32,26 @@ public class dbPage<TEntity extends dbStorable<TEntity>> extends dbStorable<dbPa
 
     @Override
     public byte[] serialize() throws UnsupportedEncodingException {
-        byte[] PAGE = new byte[this.size];
-        int recordLen = 0;
+        byte[] PAGE = new byte[this.getSize()];
+        int recordOffset = 0;
         int recordId = 0;
         for(TEntity entity : this.entities){
             entity.setKey(new dbEntityKey(this.key.getPageId(),recordId));
             byte[] bRecord = entity.serialize();
-            System.arraycopy(bRecord, 0, PAGE, recordLen, recordLen+entity.getSize());
-            recordLen += entity.getSize();
+            if(bRecord.length != entity.getSize()){
+                throw new UnsupportedEncodingException("Error Serialize Data is not the same size as returned by getSize()");
+            }
+            Serialize.bytes(bRecord, bRecord.length, recordOffset, PAGE);
+            recordOffset += bRecord.length;
             recordId += 1;
         }
         return PAGE;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public dbPage<TEntity> deserialize(byte[] DATA) throws UnsupportedEncodingException {
-        dbPage<TEntity> page = new dbPage<TEntity>(this.size, this.type);
+    public dbBytePage<TEntity> deserialize(byte[] DATA) throws UnsupportedEncodingException {
+        dbBytePage<TEntity> page = (dbBytePage<TEntity>) this.clone();
         System.out.println("deserialize Page ");
         int recCount = 0;
         int recordLen = 0;
@@ -72,11 +84,11 @@ public class dbPage<TEntity extends dbStorable<TEntity>> extends dbStorable<dbPa
 
     @Override
     public long getIndex() {
-        return this.size * this.key.getPageId();
+        return this.getSize() * this.key.getPageId();
     }
 
     @Override
     public String toString() {
-        return String.format("JSON(dbPage)=>{ \"pageId\": %d, \"pageLength\": %d, \"pageSize\": %d }", this.key.getPageId(),this.entities.size() , this.size);
+        return String.format("JSON(dbPage)=>{ \"pageId\": %d, \"pageLength\": %d, \"pageSize\": %d }", this.key.getPageId(),this.entities.size() , this.getSize() );
     }
 }

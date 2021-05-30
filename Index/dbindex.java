@@ -1,74 +1,20 @@
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
 
+import bTree.bTreeDB;
 import bTree.bTreeRoot;
-import entity.dbEntity;
-import entity.dbEntityKey;
+import dbstore.dbBytePage;
+import entity.dbEntityLoader;
+import index.dbIndexValue;
+import index.dbStringIndexKey;
 import utils.Args.IncorrectArgs;
 import utils.Cli;
-import utils.Deserialize;
-import utils.Serialize;
 
 public class dbindex {
 
-    public static class dbStringIndex extends dbEntity<dbStringIndex> implements Comparable<dbStringIndex> {
-
-        public static final int MAX_KEY_SIZE = 10;
-
-
-        public static final int KEY_OFFSET = 0;
-        public static final int INDEX_KEY_OFFSET = KEY_OFFSET + MAX_KEY_SIZE;
-
-        public static int pageSize = 1024;
-        public static int recordSize = dbEntityRow.RECORD_SIZE;
-        
-        public String indexValue;
-        public dbEntityKey lookupKey;
-
-        dbStringIndex() {}
-        dbStringIndex(String indexValue , int pageId , int rid ){
-            this.indexValue = indexValue;
-            this.lookupKey = new dbEntityKey(pageId, rid);
-        }
-
-        @Override
-        public int getSize() {
-            return MAX_KEY_SIZE + dbEntityKey.CONTENT_SIZE;
-        }
-
-        @Override
-        public byte[] serialize() throws UnsupportedEncodingException {
-            byte[] DATA = new byte[this.getSize()];
-            Serialize.bytes(this.lookupKey.serialize(), this.lookupKey.getSize(), INDEX_KEY_OFFSET, DATA);
-            Serialize.string(this.indexValue, MAX_KEY_SIZE, KEY_OFFSET , DATA);
-            return DATA;
-        }
-
-        @Override
-        public dbindex.dbStringIndex deserialize(byte[] DATA) throws UnsupportedEncodingException {
-            dbStringIndex dto = new dbStringIndex();
-            dto.lookupKey = new dbEntityKey().deserialize(
-                Deserialize.bytes(DATA, dbEntityKey.CONTENT_SIZE, INDEX_KEY_OFFSET)
-            );
-            dto.indexValue = Deserialize.string(DATA, MAX_KEY_SIZE, KEY_OFFSET);
-            return dto;
-        }
-
-        @Override
-        public long getIndex() {
-            return this.lookupKey.getIndex(pageSize, recordSize);
-        }
-
-        @Override
-        public int compareTo(dbindex.dbStringIndex o) {
-            return o.indexValue.compareTo(this.indexValue);
-        }
-
-        @Override
-        public String toString() {
-            return this.lookupKey.toString();
-        }
-        
-    }
+    
+    
 
     public static class dbindexCli extends Cli {
         @Override
@@ -102,13 +48,52 @@ public class dbindex {
 
 
     public void run(dbindexCli options){
-        bTreeRoot<dbStringIndex,dbStringIndex> rootNode = new bTreeRoot<dbStringIndex,dbStringIndex>();
-        dbStringIndex test1 = new dbStringIndex("AAAAA",0, 0);
-        
-        rootNode.insert(test1, test1);
-        System.out.println("saved Item");
-        dbStringIndex test2 = rootNode.search(test1);
-        System.out.println(test2.toString());
+        dbStringIndexKey.STRING_INDEX_KEY_SIZE = 38;
+        dbStringIndexKey keyType = new dbStringIndexKey("");
+        dbIndexValue valueType = new dbIndexValue(0,0);
+        bTreeRoot<dbStringIndexKey,dbIndexValue> rootNode = new bTreeRoot<dbStringIndexKey,dbIndexValue>(keyType, valueType);
+
+        bTreeDB<dbStringIndexKey,dbIndexValue> saver = new bTreeDB<dbStringIndexKey,dbIndexValue>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/index", 6 , rootNode);
+
+        dbEntityRow entityType = new dbEntityRow(); 
+        dbBytePage<dbEntityRow> pageType = new dbBytePage<>(1024,entityType);
+        dbEntityLoader<dbEntityRow,dbBytePage<dbEntityRow>> loader = new dbEntityLoader<>("/Users/mullin/Documents/uni/DBSystems/Assignment1/Index/data/heap.1024", pageType, entityType);
+
+        try{
+            loader.connect();
+
+            Iterator<dbEntityRow> rows = loader.iterator();
+            int index = 0;
+            while(rows.hasNext()){
+                dbEntityRow tmpRow = rows.next();
+                System.out.println(index + tmpRow.toString());
+                index += 1;
+                dbStringIndexKey tmpKey = new dbStringIndexKey(tmpRow.sensorName);
+                dbIndexValue tmpLocation = new dbIndexValue(tmpRow.getKey());
+                rootNode.insert(tmpKey, tmpLocation);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            loader.close();
+        }
+       
+
+
+
+
+        try {
+            System.out.println("Saving");
+            saver.connect();
+            saver.save();
+            saver.close();
+            saver.log();
+            //System.out.println("RootNodeKey:"+rootNode.getNode().toJsonString());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         
     } 
  

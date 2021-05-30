@@ -1,39 +1,33 @@
 package bTree;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 
-import dbstore.IdbStorable;
+import dbstore.Idbentity;
 import entity.dbEntity;
 import entity.dbEntityKey;
-import entity.dbPage;
 import utils.Deserialize;
 import utils.Serialize;
 
-enum TreeNodeType {
-	InnerNode,
-	LeafNode
-}
-
-public abstract class dbIndexNode<TKey extends Comparable<TKey> & IdbStorable<TKey>>  extends dbEntity<dbIndexNode<TKey>> {
-    
+public abstract class dbIndexNode<TKey extends Comparable<TKey> & Idbentity<TKey> , TValue extends Idbentity<TValue>>  extends dbEntity<dbIndexNode<TKey,TValue>> {
+    protected final static int LEAFORDER = 4;
+    protected final static int INNERORDER = 4;
+    protected final static int KEY_SIZE = INNERORDER + 1;
+    protected final static int CHILDREN_SIZE = INNERORDER + 2;
+    protected final static int VALUE_SIZE = KEY_SIZE;
     
     protected Object[] keys;
     protected int keyCount;
-    protected dbIndexNode<TKey> parentNode;
-    protected dbIndexNode<TKey> leftSibling;
-    protected dbIndexNode<TKey> rightSibling;
+    protected dbIndexNode<TKey,TValue> parentNode;
+    protected dbIndexNode<TKey,TValue> leftSibling;
+    protected dbIndexNode<TKey,TValue> rightSibling;
+
+
 
     
 
 	//#region BTree
     //#region BTree Helpers
-	protected dbIndexNode() {
-		this.keyCount = 0;
-		this.parentNode = null;
-		this.leftSibling = null;
-		this.rightSibling = null;
-	}
+
 
 	public int getKeyCount() {
 		return this.keyCount;
@@ -48,11 +42,11 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & IdbStorable<TK
 		this.keys[index] = key;
 	}
 
-	public dbIndexNode<TKey> getParent() {
+	public dbIndexNode<TKey,TValue> getParent() {
 		return this.parentNode;
 	}
 
-	public void setParent(dbIndexNode<TKey> parent) {
+	public void setParent(dbIndexNode<TKey,TValue> parent) {
 		this.parentNode = parent;
 	}	
 	
@@ -74,14 +68,14 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & IdbStorable<TK
 		return this.getKeyCount() == this.keys.length;
 	}
 	
-	public dbIndexNode<TKey> dealOverflow() {
+	public dbIndexNode<TKey,TValue> dealOverflow() {
 		int midIndex = this.getKeyCount() / 2;
 		TKey upKey = this.getKey(midIndex);
 		
-		dbIndexNode<TKey> newRNode = this.split();
+		dbIndexNode<TKey,TValue> newRNode = this.split();
 				
 		if (this.getParent() == null) {
-			this.setParent(new dbInnerNode<TKey>());
+			this.setParent(new dbInnerNode<TKey,TValue>(this.keyType, this.valueType));
 		}
 		newRNode.setParent(this.getParent());
 		
@@ -96,9 +90,9 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & IdbStorable<TK
 		return this.getParent().pushUpKey(upKey, this, newRNode);
 	}
 	
-	protected abstract dbIndexNode<TKey> split();
+	protected abstract dbIndexNode<TKey,TValue> split();
 	
-	protected abstract dbIndexNode<TKey> pushUpKey(TKey key, dbIndexNode<TKey> leftChild, dbIndexNode<TKey> rightNode);
+	protected abstract dbIndexNode<TKey,TValue> pushUpKey(TKey key, dbIndexNode<TKey,TValue> leftChild, dbIndexNode<TKey,TValue> rightNode);
 	//#endregion
 	
 	
@@ -115,38 +109,38 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & IdbStorable<TK
 		return this.getKeyCount() > (this.keys.length / 2);
 	}
 	
-	public dbIndexNode<TKey> getLeftSibling() {
+	public dbIndexNode<TKey,TValue> getLeftSibling() {
 		if (this.leftSibling != null && this.leftSibling.getParent() == this.getParent())
 			return this.leftSibling;
 		return null;
 	}
 
-	public void setLeftSibling(dbIndexNode<TKey> sibling) {
+	public void setLeftSibling(dbIndexNode<TKey,TValue> sibling) {
 		this.leftSibling = sibling;
 	}
 
-	public dbIndexNode<TKey> getRightSibling() {
+	public dbIndexNode<TKey,TValue> getRightSibling() {
 		if (this.rightSibling != null && this.rightSibling.getParent() == this.getParent())
 			return this.rightSibling;
 		return null;
 	}
 
-	public void setRightSibling(dbIndexNode<TKey> silbling) {
+	public void setRightSibling(dbIndexNode<TKey,TValue> silbling) {
 		this.rightSibling = silbling;
 	}
 	
-	public dbIndexNode<TKey> dealUnderflow() {
+	public dbIndexNode<TKey,TValue> dealUnderflow() {
 		if (this.getParent() == null)
 			return null;
 		
 		// try to borrow a key from sibling
-		dbIndexNode<TKey> leftSibling = this.getLeftSibling();
+		dbIndexNode<TKey,TValue> leftSibling = this.getLeftSibling();
 		if (leftSibling != null && leftSibling.canLendAKey()) {
 			this.getParent().processChildrenTransfer(this, leftSibling, leftSibling.getKeyCount() - 1);
 			return null;
 		}
 		
-		dbIndexNode<TKey> rightSibling = this.getRightSibling();
+		dbIndexNode<TKey,TValue> rightSibling = this.getRightSibling();
 		if (rightSibling != null && rightSibling.canLendAKey()) {
 			this.getParent().processChildrenTransfer(this, rightSibling, 0);
 			return null;
@@ -161,120 +155,204 @@ public abstract class dbIndexNode<TKey extends Comparable<TKey> & IdbStorable<TK
 		}
 	}
 	
-	protected abstract void processChildrenTransfer(dbIndexNode<TKey> borrower, dbIndexNode<TKey> lender, int borrowIndex);
+	protected abstract void processChildrenTransfer(dbIndexNode<TKey,TValue> borrower, dbIndexNode<TKey,TValue> lender, int borrowIndex);
 	
-	protected abstract dbIndexNode<TKey> processChildrenFusion(dbIndexNode<TKey> leftChild, dbIndexNode<TKey> rightChild);
+	protected abstract dbIndexNode<TKey,TValue> processChildrenFusion(dbIndexNode<TKey,TValue> leftChild, dbIndexNode<TKey,TValue> rightChild);
 	
-	protected abstract void fusionWithSibling(TKey sinkKey, dbIndexNode<TKey> rightSibling);
+	protected abstract void fusionWithSibling(TKey sinkKey, dbIndexNode<TKey,TValue> rightSibling);
 	
-	protected abstract TKey transferFromSibling(TKey sinkKey, dbIndexNode<TKey> sibling, int borrowIndex);
+	protected abstract TKey transferFromSibling(TKey sinkKey, dbIndexNode<TKey,TValue> sibling, int borrowIndex);
     //#endregion
     //#endregion
    
     //#region Db storable
-    public static final int KEY_COUNT_SIZE = 4;
-    public static final int PARENT_NODE_SIZE = dbEntityKey.CONTENT_SIZE;
-    public static final int LEFT_SIBLING_SIZE = dbEntityKey.CONTENT_SIZE;
-    public static final int RIGHT_SIBLING_SIZE = dbEntityKey.CONTENT_SIZE;
+    public static final int NODE_TYPE_SIZE = 4;
+    public static final int NODE_NULL_CHECK_SIZE = 4;
+    public static final int NODE_LOOKUP_SIZE = NODE_TYPE_SIZE + NODE_NULL_CHECK_SIZE + dbEntityKey.CONTENT_SIZE;
 
-    public static final int KEY_COUNT_OFFSET = 0;
-    public static final int PARENT_NODE_OFFSET = KEY_COUNT_OFFSET + KEY_COUNT_SIZE;
+    public static final int NODE_NULL_CHECK_OFFSET = 0;
+    public static final int NODE_TYPE_OFFSET = NODE_NULL_CHECK_OFFSET + NODE_NULL_CHECK_SIZE;
+    public static final int NODE_LOOKUP_OFFSET = NODE_TYPE_OFFSET + NODE_TYPE_SIZE;
+
+    public static final int PARENT_NODE_SIZE = NODE_LOOKUP_SIZE;
+    public static final int LEFT_SIBLING_SIZE = NODE_LOOKUP_SIZE;
+    public static final int RIGHT_SIBLING_SIZE = NODE_LOOKUP_SIZE;
+    
+
+    public static final int PARENT_NODE_OFFSET = 0;
     public static final int LEFT_SIBLING_OFFSET = PARENT_NODE_OFFSET + PARENT_NODE_SIZE;
     public static final int RIGHT_SIBLING_OFFSET = LEFT_SIBLING_OFFSET + LEFT_SIBLING_SIZE;
     public static final int KEYS_OFFSET = RIGHT_SIBLING_OFFSET + RIGHT_SIBLING_SIZE;
 
 
     
-    protected dbPage<dbIndexElement<TKey>> keyList;
-    protected dbIndexElement<TKey> type;
+    protected TKey keyType;
+    protected TValue valueType;
+    protected dbIndexNodeLoader<TKey, TValue> loader;
+    protected boolean isLoaded = true;
 
-    abstract dbIndexNode<TKey> newInstance();
 
-    dbIndexNode(int keyCount , dbIndexElement<TKey> type) {
+    public void initializeLoad(dbEntityKey key, dbIndexNodeLoader<TKey, TValue> loader){
+        this.isLoaded = false;
+        this.key = key;
+        this.loader = loader;
+    }
+    
+
+    abstract dbIndexNode<TKey,TValue> newInstance();
+
+    dbIndexNode( TKey keyType, TValue valueType) {
         super();
-        this.type = type;
-        this.keyCount = keyCount;
-        this.keyList = new dbPage<dbIndexElement<TKey>>(keyCount * this.type.getSize(), type);
+        this.keyType = keyType;
+        this.keyCount = 0;
+        this.valueType = valueType;
+        this.parentNode = null;
+		this.leftSibling = null;
+		this.rightSibling = null;
+    }
+
+
+    protected int keyListSize(){
+        return KEY_SIZE * this.keyType.getSize();
     }
 
     @Override
     public int getSize() {
-        return keyCount * this.type.getSize() + KEY_COUNT_SIZE + dbEntityKey.CONTENT_SIZE * 3;
+        return this.keyListSize() + NODE_LOOKUP_SIZE * 3;
     }
 
-    //@SuppressWarnings("unchecked")
-    public dbIndexNode<TKey> initialize(dbEntityKey key, int keyCount, dbIndexElement<TKey> type ,TreeNodeType nodeType){
-        dbIndexNode<TKey> dto = null;
+    public abstract dbIndexNode<TKey,TValue> load();
+
+    public dbIndexNode<TKey,TValue> initialize(boolean isNull, dbEntityKey key,TreeNodeType nodeType){
+        if(isNull) { return null; }
+        dbIndexNode<TKey,TValue> dto = null;
         if(nodeType == TreeNodeType.LeafNode){
-            dto = new dbLeafNode<TKey, TKey>(); // TODO: SC  sperate type required 
+            dto = new dbLeafNode<TKey, TValue>(this.keyType, this.valueType); 
         }else if(nodeType == TreeNodeType.InnerNode){
-            dto = new dbInnerNode<TKey>();
+            dto = new dbInnerNode<TKey, TValue>(this.keyType, this.valueType);
         }
         dto.key = key;
-        dto.keyCount = keyCount;
-        dto.type = type;
+        dto.loader = this.loader;
+        dto.isLoaded = false;
         return dto;
     };
 
-    public int keyListSize(){
-        return keyCount * this.type.getSize();
+
+
+
+
+    protected byte[] serializeLookup(dbIndexNode<TKey, TValue> node) 
+        throws UnsupportedEncodingException
+    {
+        byte[] DATA = new byte[NODE_LOOKUP_SIZE];
+        if(node == null){ return DATA; }
+        Serialize.integer(1, NODE_NULL_CHECK_SIZE , NODE_NULL_CHECK_OFFSET, DATA);
+        Serialize.integer(node.getNodeType().toInt(), NODE_TYPE_SIZE, NODE_TYPE_OFFSET,DATA);
+        Serialize.bytes(node.getKey().serialize(), node.getKey().getSize(), NODE_LOOKUP_OFFSET, DATA);
+        return DATA;
     }
 
-    private void SetPageList(dbIndexElement<TKey> ary[] ){
-        this.keyList.entities = Arrays.asList(ary);
-    }
+    
+
+
 
     @SuppressWarnings("unchecked")
     @Override
     public byte[] serialize() throws UnsupportedEncodingException {
         byte[] DATA = new byte[this.getSize()];
-        Serialize.integer(this.keyCount, KEY_COUNT_SIZE, KEY_COUNT_OFFSET, DATA);
-        Serialize.bytes(this.parentNode.getKey().serialize(), PARENT_NODE_SIZE, PARENT_NODE_OFFSET, DATA);
-        Serialize.bytes(this.leftSibling.getKey().serialize(), LEFT_SIBLING_SIZE, LEFT_SIBLING_OFFSET, DATA);
-        Serialize.bytes(this.rightSibling.getKey().serialize(), RIGHT_SIBLING_SIZE, RIGHT_SIBLING_OFFSET, DATA);
-        this.SetPageList((dbIndexElement<TKey>[]) this.keys);
+        Serialize.bytes(this.serializeLookup(this.parentNode), PARENT_NODE_SIZE, PARENT_NODE_OFFSET, DATA);
+        Serialize.bytes(this.serializeLookup(this.leftSibling), LEFT_SIBLING_SIZE, LEFT_SIBLING_OFFSET, DATA);
+        Serialize.bytes(this.serializeLookup(this.rightSibling), RIGHT_SIBLING_SIZE, RIGHT_SIBLING_OFFSET, DATA);
         Serialize.bytes(
-            this.keyList.serialize(), this.keyListSize() , KEYS_OFFSET, DATA
+            Serialize.array(this.keys, this.keyListSize() ),
+            this.keyListSize(), 
+            KEYS_OFFSET, 
+            DATA
         );
         return DATA;
     }
 
-    @Override
-    public dbIndexNode<TKey> deserialize(byte[] DATA) throws UnsupportedEncodingException {
-        dbIndexNode<TKey> dto = this.newInstance();
-        dbEntityKey keyType = new dbEntityKey();
-        dto.keyCount = Deserialize.integer(DATA, KEY_COUNT_SIZE, KEY_COUNT_OFFSET);
-        dto.parentNode = dto.initialize(
-            keyType.deserialize(
-                Deserialize.bytes(DATA, PARENT_NODE_SIZE, PARENT_NODE_SIZE)
-            ),
-            this.keyCount,
-            this.type,
-            this.getNodeType()
-        );
-        dto.leftSibling = dto.initialize(
-            keyType.deserialize(
-                Deserialize.bytes(DATA, LEFT_SIBLING_SIZE, LEFT_SIBLING_SIZE)
-            ),
-            this.keyCount,
-            this.type,
-            this.getNodeType()
-        );
-        dto.rightSibling = dto.initialize(
-            keyType.deserialize(
-                Deserialize.bytes(DATA, RIGHT_SIBLING_SIZE, RIGHT_SIBLING_SIZE)
-            ),
-            this.keyCount,
-            this.type,
-            this.getNodeType()
-        );
-        this.keyList.deserialize(
-            Deserialize.bytes(DATA, this.keyListSize(), KEYS_OFFSET )
-        );
-        this.keys = this.keyList.entities.toArray();
-
-        return dto;
+    protected boolean deserializeNullCheck(byte[] rec, int offset)
+        throws UnsupportedEncodingException
+    {
+        int val = Deserialize.integer(rec, 4, offset);
+        return val == 0;
     }
+    protected TreeNodeType deserializeNodeType(byte[] rec, int offset)
+        throws UnsupportedEncodingException
+    {
+        return TreeNodeType.fromInt(
+            Deserialize.integer(rec, 4, offset)
+        );
+    }
+
+    protected dbEntityKey deserializeLookupKey(byte[] rec, int offset)
+        throws UnsupportedEncodingException
+    {
+        return new dbEntityKey().deserialize(
+            Deserialize.bytes(rec, dbEntityKey.CONTENT_SIZE, 4+ offset)
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public dbIndexNode<TKey,TValue> deserialize(byte[] DATA) throws UnsupportedEncodingException {
+        this.parentNode = this.initialize(
+            this.deserializeNullCheck(DATA, PARENT_NODE_OFFSET),
+            this.deserializeLookupKey(DATA, PARENT_NODE_OFFSET),
+            this.deserializeNodeType(DATA, PARENT_NODE_OFFSET)
+        );
+        this.leftSibling = this.initialize(
+            this.deserializeNullCheck(DATA, PARENT_NODE_OFFSET),
+            this.deserializeLookupKey(DATA, LEFT_SIBLING_OFFSET),
+            this.deserializeNodeType(DATA, LEFT_SIBLING_OFFSET)
+        );
+        this.rightSibling = this.initialize(
+            this.deserializeNullCheck(DATA, PARENT_NODE_OFFSET),
+            this.deserializeLookupKey(DATA, RIGHT_SIBLING_OFFSET),
+            this.deserializeNodeType(DATA, RIGHT_SIBLING_OFFSET)
+        );
+        this.keys = Deserialize.array(
+            Deserialize.bytes(DATA, this.keyListSize(), KEYS_OFFSET), 
+            this.keyType
+        ); 
+        
+        return (dbIndexNode<TKey,TValue>) this.clone();
+    }
+
+    public String lookupJson(dbIndexNode<TKey, TValue> node){
+        if(node == null) return "{dbKey:null,type:null}";
+        return "{ dbKey:"+ node.key.toJsonString()+ ",type:"+node.getNodeType() +" }";
+    }
+
+    public String toJsonString(){
+        return "{"+
+        " ,dbKey:"+this.key.toJsonString()+
+        " ,type:"+this.getNodeType()+ ""+
+        " ,parentNode:"+this.lookupJson(this.parentNode)+
+        " ,keyCount:"+this.keyCount+""+
+        "}";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == this){
+            return true;
+        }
+        if(obj instanceof dbIndexNode<?,?>){
+            try {
+                dbIndexNode<?,?> casted = (dbIndexNode<?,?>) obj;
+                if(casted.getNodeType() == this.getNodeType() && super.equals(obj)){
+                    return true;
+                }
+            }catch(Exception e){}
+        }
+        return false;
+    }
+
+
+
+    public abstract void fillIterator(bTreeStats<TKey,TValue> items, int depth);
 
 
     //#endregion

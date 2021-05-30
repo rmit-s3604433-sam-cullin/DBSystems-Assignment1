@@ -23,8 +23,7 @@ class dbEntityRow extends dbEntity<dbEntityRow> {
         public static final int SENSORNAME_SIZE = 38;
         public static final int HOURLYCOUNT_SIZE = 4;
     
-        public static final int RECORD_SIZE =  dbEntityKey.CONTENT_SIZE 
-                                            + DB_META_PADDING 
+        public static final int RECORD_SIZE =  dbEntityKey.CONTENT_SIZE  
                                             + ID_SIZE
                                             + DATETIME_SIZE
                                             + YEAR_SIZE

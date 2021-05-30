@@ -43,7 +43,9 @@ public class dbload
       }
       else
       {
+        
          System.out.println("Error: only pass in three arguments");
+         System.out.println("java dbload -p <pagesize> <file>");
       }
    }
 

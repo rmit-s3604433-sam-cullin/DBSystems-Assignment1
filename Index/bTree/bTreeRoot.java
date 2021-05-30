@@ -1,13 +1,21 @@
 package bTree;
 
-import dbstore.IdbStorable;
+import java.util.Iterator;
 
-public class bTreeRoot<TKey extends Comparable<TKey> & IdbStorable<TKey> , TValue> {
-	private dbIndexNode<TKey> root;
+import dbstore.Idbentity;
+
+public class bTreeRoot<TKey extends Comparable<TKey> & Idbentity<TKey> , TValue extends Idbentity<TValue> > {
+	protected dbIndexNode<TKey, TValue> root;
 	
-	public bTreeRoot() {
-		this.root = new dbLeafNode<TKey, TValue>();
+	public bTreeRoot(TKey keyType, TValue valueType) {
+		this.root = new dbLeafNode<TKey, TValue>(keyType,valueType);
 	}
+    public dbIndexNode<TKey, TValue> getNode(){
+        return this.root;
+    }
+    public void setRoot(dbIndexNode<TKey, TValue> root){
+        this.root = root;
+    }
 
 	/**
 	 * Insert a new key and its associated value into the B+ tree.
@@ -17,7 +25,7 @@ public class bTreeRoot<TKey extends Comparable<TKey> & IdbStorable<TKey> , TValu
 		leaf.insertKey(key, value);
 		
 		if (leaf.isOverflow()) {
-			dbIndexNode<TKey> n = leaf.dealOverflow();
+			dbIndexNode<TKey, TValue> n = leaf.dealOverflow();
 			if (n != null)
 				this.root = n; 
 		}
@@ -40,7 +48,7 @@ public class bTreeRoot<TKey extends Comparable<TKey> & IdbStorable<TKey> , TValu
 		dbLeafNode<TKey, TValue> leaf = this.findLeafNodeShouldContainKey(key);
 		
 		if (leaf.delete(key) && leaf.isUnderflow()) {
-			dbIndexNode<TKey> n = leaf.dealUnderflow();
+			dbIndexNode<TKey, TValue> n = leaf.dealUnderflow();
 			if (n != null)
 				this.root = n; 
 		}
@@ -49,13 +57,23 @@ public class bTreeRoot<TKey extends Comparable<TKey> & IdbStorable<TKey> , TValu
 	/**
 	 * Search the leaf node which should contain the specified key
 	 */
-	@SuppressWarnings("unchecked")
 	private dbLeafNode<TKey, TValue> findLeafNodeShouldContainKey(TKey key) {
-		dbIndexNode<TKey> node = this.root;
+		dbIndexNode<TKey, TValue> node = this.root;
 		while (node.getNodeType() == TreeNodeType.InnerNode) {
-			node = ((dbInnerNode<TKey>)node).getChild( node.search(key) );
+			node = ((dbInnerNode<TKey, TValue>)node).getChild( node.search(key) );
 		}
 		
 		return (dbLeafNode<TKey, TValue>)node;
 	}
+
+    public Iterator<dbIndexNode<TKey,TValue>> iterator() {
+        bTreeStats<TKey,TValue> stats = this.stats();
+        return stats.nodes.iterator();
+    }
+
+    public bTreeStats<TKey,TValue> stats(){
+        bTreeStats<TKey,TValue> stats = new bTreeStats<>();
+        this.root.fillIterator(stats, 0);
+        return stats;
+    }
 }

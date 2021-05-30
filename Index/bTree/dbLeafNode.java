@@ -1,14 +1,19 @@
 package bTree;
 
-import dbstore.IdbStorable;
+import java.io.UnsupportedEncodingException;
 
-public class dbLeafNode<TKey extends Comparable<TKey> & IdbStorable<TKey>, TValue>  extends dbIndexNode<TKey> {
-    protected final static int LEAFORDER = 4;
+import dbstore.Idbentity;
+import utils.Deserialize;
+import utils.Serialize;
+
+public class dbLeafNode<TKey extends Comparable<TKey> & Idbentity<TKey>, TValue extends Idbentity<TValue>>  extends dbIndexNode<TKey, TValue> {
+    
 	private Object[] values;
 	
-	public dbLeafNode() {
-		this.keys = new Object[LEAFORDER + 1];
-		this.values = new Object[LEAFORDER + 1];
+	public dbLeafNode(TKey keyType, TValue valueType) {
+        super(keyType, valueType);
+		this.keys = new Object[KEY_SIZE];
+		this.values = new Object[VALUE_SIZE];
 	}
 
 	@SuppressWarnings("unchecked")
@@ -68,10 +73,10 @@ public class dbLeafNode<TKey extends Comparable<TKey> & IdbStorable<TKey>, TValu
 	 * When splits a leaf node, the middle key is kept on new node and be pushed to parent node.
 	 */
 	@Override
-	protected dbIndexNode<TKey> split() {
+	protected dbIndexNode<TKey,TValue> split() {
 		int midIndex = this.getKeyCount() / 2;
 		
-		dbLeafNode<TKey, TValue> newRNode = new dbLeafNode<TKey, TValue>();
+		dbLeafNode<TKey, TValue> newRNode = this.newInstance();
 		for (int i = midIndex; i < this.getKeyCount(); ++i) {
 			newRNode.setKey(i - midIndex, this.getKey(i));
 			newRNode.setValue(i - midIndex, this.getValue(i));
@@ -85,7 +90,7 @@ public class dbLeafNode<TKey extends Comparable<TKey> & IdbStorable<TKey>, TValu
 	}
 	
 	@Override
-	protected dbIndexNode<TKey> pushUpKey(TKey key, dbIndexNode<TKey> leftChild, dbIndexNode<TKey> rightNode) {
+	protected dbIndexNode<TKey,TValue> pushUpKey(TKey key, dbIndexNode<TKey,TValue> leftChild, dbIndexNode<TKey,TValue> rightNode) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -115,12 +120,12 @@ public class dbLeafNode<TKey extends Comparable<TKey> & IdbStorable<TKey>, TValu
 	}
 	
 	@Override
-	protected void processChildrenTransfer(dbIndexNode<TKey> borrower, dbIndexNode<TKey> lender, int borrowIndex) {
+	protected void processChildrenTransfer(dbIndexNode<TKey,TValue> borrower, dbIndexNode<TKey,TValue> lender, int borrowIndex) {
 		throw new UnsupportedOperationException();
 	}
 	
 	@Override
-	protected dbIndexNode<TKey> processChildrenFusion(dbIndexNode<TKey> leftChild, dbIndexNode<TKey> rightChild) {
+	protected dbIndexNode<TKey,TValue> processChildrenFusion(dbIndexNode<TKey,TValue> leftChild, dbIndexNode<TKey,TValue> rightChild) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -128,8 +133,7 @@ public class dbLeafNode<TKey extends Comparable<TKey> & IdbStorable<TKey>, TValu
 	 * Notice that the key sunk from parent is be abandoned. 
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
-	protected void fusionWithSibling(TKey sinkKey, dbIndexNode<TKey> rightSibling) {
+	protected void fusionWithSibling(TKey sinkKey, dbIndexNode<TKey,TValue> rightSibling) {
 		dbLeafNode<TKey, TValue> siblingLeaf = (dbLeafNode<TKey, TValue>)rightSibling;
 		
 		int j = this.getKeyCount();
@@ -145,8 +149,7 @@ public class dbLeafNode<TKey extends Comparable<TKey> & IdbStorable<TKey>, TValu
 	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
-	protected TKey transferFromSibling(TKey sinkKey, dbIndexNode<TKey> sibling, int borrowIndex) {
+	protected TKey transferFromSibling(TKey sinkKey, dbIndexNode<TKey,TValue> sibling, int borrowIndex) {
 		dbLeafNode<TKey, TValue> siblingNode = (dbLeafNode<TKey, TValue>)sibling;
 		
 		this.insertKey(siblingNode.getKey(borrowIndex), siblingNode.getValue(borrowIndex));
@@ -156,7 +159,60 @@ public class dbLeafNode<TKey extends Comparable<TKey> & IdbStorable<TKey>, TValu
 	}
 
     @Override
-    dbIndexNode<TKey> newInstance() {
-        return new dbLeafNode<TKey,TValue>();
+    dbLeafNode<TKey,TValue> newInstance() {
+        return new dbLeafNode<TKey,TValue>(this.keyType, this.valueType);
+    }
+
+    @Override
+    public int getSize() {
+        return super.getSize() + this.valueListSize();
+    }
+
+    protected int valueListSize(){
+        return VALUE_SIZE * this.valueType.getSize();
+    }
+    
+    protected int valueListOffset(){
+        return super.getSize();
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public dbLeafNode<TKey, TValue> deserialize(byte[] DATA) throws UnsupportedEncodingException {
+        super.deserialize(DATA);
+        this.values = Deserialize.array(
+            Deserialize.bytes(DATA, this.valueListSize(), this.valueListOffset()), this.valueType
+        );
+        return (dbLeafNode<TKey,TValue>) this.clone();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public byte[] serialize() throws UnsupportedEncodingException {
+        byte[] DATA = new byte[this.getSize()];
+        Serialize.bytes(super.serialize(), super.getSize(), 0, DATA);
+        Serialize.bytes(
+            Serialize.array(this.values, this.valueListSize()),
+            this.valueListSize(),
+            this.valueListOffset(),
+            DATA
+        );
+        return DATA;
+    }
+
+    @Override
+    public void fillIterator(bTreeStats<TKey,TValue> items, int depth) {
+        items.addNode(this, depth);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("(leaf) size: %d  id %s keys %s", this.getSize(), this.key.toString(), Serialize.arrayToString(this.keys, false));
+    }
+
+    @Override
+    public dbIndexNode<TKey, TValue> load() {
+        return this.loader.loadLeafNode(this);
     }
 }
+

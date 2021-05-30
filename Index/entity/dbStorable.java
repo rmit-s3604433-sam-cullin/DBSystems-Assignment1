@@ -15,13 +15,23 @@ public abstract class dbStorable<T> implements IdbStorable<T> {
         pageSize = size;
     }
 
+    public Object clone() {
+        try{
+            return super.clone();
+        } catch( CloneNotSupportedException e){
+            // Handel Exception here to stop the need for exception passing through all functions
+            System.out.println(e);
+            System.exit(1);
+            return new Object();
+        }
+    }
+
     public dbEntityKey key;
 
     public dbStorable(){
         this.key = new dbEntityKey(0,0);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object obj) {
         if(obj == this){
@@ -29,7 +39,7 @@ public abstract class dbStorable<T> implements IdbStorable<T> {
         }
         if(obj instanceof dbStorable){
             try {
-                dbStorable<Object> casted = (dbStorable<Object>) obj;
+                dbStorable<?> casted = (dbStorable<?>) obj;
                 if(casted.key.getPageId() == this.key.getPageId() && casted.key.getRId() == this.key.getRId()){
                     return true;
                 }

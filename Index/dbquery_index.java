@@ -2,9 +2,9 @@
 import java.io.IOException;
 import java.util.Arrays;
 
+import dbstore.dbBytePage;
 import entity.dbEntityKey;
 import entity.dbEntityLoader;
-import entity.dbPage;
 
 public class dbquery_index {
     public static void main(String args[]) {
@@ -38,15 +38,15 @@ public class dbquery_index {
 
     public void readDB(String filepath , int index ){
         dbEntityRow rowType = new dbEntityRow();
-        dbPage<dbEntityRow> pageType = new dbPage<dbEntityRow>(1024, rowType);
-        dbEntityLoader<dbEntityRow, dbPage<dbEntityRow> > client = new dbEntityLoader<>(filepath, pageType, rowType);
+        dbBytePage<dbEntityRow> pageType = new dbBytePage<dbEntityRow>(1024, rowType);
+        dbEntityLoader<dbEntityRow, dbBytePage<dbEntityRow> > client = new dbEntityLoader<>(filepath, pageType, rowType);
 
         try{
             client.connect();
             dbEntityRow row = client.findEntity(new dbEntityKey(index, 1));
             System.out.println(row.toString());
 
-            dbPage<dbEntityRow> page = client.findPage(new dbEntityKey(index, 0));
+            dbBytePage<dbEntityRow> page = client.findPage(new dbEntityKey(index, 0));
             System.out.println(page);
             for(dbEntityRow entity : page.entities){
                 System.out.println(entity.toString());
