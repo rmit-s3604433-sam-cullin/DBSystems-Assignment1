@@ -80,7 +80,6 @@ public class Deserialize {
      * @return
      * @throws UnsupportedEncodingException
      */
-    @SuppressWarnings("unchecked")
     public static <T extends Idbentity<T> & Cloneable > Object[]  array(byte[] record, T type)
         throws UnsupportedEncodingException
     {
