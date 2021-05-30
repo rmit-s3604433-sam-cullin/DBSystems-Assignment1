@@ -129,7 +129,7 @@ Query Logs: [./logs/derby.query.txt](./logs/derby.query.txt)
 | 1123009ms | 1505ms |
 
 
-## Optimizations
+## Secondary Indexes
 In order to optimize the queries I decided to create a unique index for the id column this would allow people to search for a single record faster. I also added an index to the dateTime column which is standard practice when dealing with time series data. This will allow for faster range searches and filters, for example, how many people traveled in January. 
 ```sql
 CREATE TABLE TESTING (
@@ -143,8 +143,8 @@ CREATE TABLE TESTING (
     sensorName VARCHAR(39),
     hourlyCount int
 );
-CREATE UNIQUE INDEX index_testing_id on TESTING(id);
-CREATE INDEX index_testing_datetime on TESTING(dateTime);
+CREATE UNIQUE INDEX index_testing_id on TESTING(id); -- primary index
+CREATE INDEX index_testing_datetime on TESTING(dateTime); -- secondary index
 ```
 
 NOTE: Unique index could only write about 60'000 before slowing down to an unusable level tried with batch size 100 and 1000 estimated time 7 hours. 
@@ -152,7 +152,7 @@ NOTE: Unique index could only write about 60'000 before slowing down to an unusa
 Update id index to be non UNIQUE:
 
 ```sql
-CREATE INDEX index_testing_id on TESTING(id);
+CREATE INDEX index_testing_id on TESTING(id); -- primary index
 ```
 
 
@@ -177,9 +177,7 @@ Query Logs: [./logs/derby.query.indexed.txt](./logs/derby.query.indexed.txt)
 
 The RW Ratios the influence the index has depending on how many read vs write requests you are planning to make. From this, we can see that if you plan to make 500 read requests to every write request then it is still not worth including an index. As the average request would be 551ms slower with an index.
 
-## Adding Secondary Index
 
-TODO: Writing up of secondary Index
 
 
 # Task 2: MongoDB [./src/services/mongo.ts](./src/services/mongo.ts)
@@ -200,7 +198,7 @@ Query Logs: [./logs/dynamo.query.txt](./logs/dynamo.query.txt)
 | 75223ms | 178ms |
 
 
-## Optimizations
+## Secondary Indexes
 To optimize mongo I attempted to create a similar structure to the derby optimizations. Which includes creating an index on the id and an index on the dateTime field. Unlike in derby where the DB could not handle the unique index mongo had no problems. The indexes were setup as follows.
 
 ```ts
@@ -211,7 +209,7 @@ collection.createIndex({
         // https://docs.mongodb.com/manual/reference/method/db.collection.createIndex/#unique
     }, {
         unique: true,
-        name: `index_testing_id`,
+        name: `primary_index_id`,
     });
 
 // Creates DateTime Index
@@ -219,7 +217,7 @@ collection.createIndex({
         "dateTime": 1 // creates an ascending ordered index on column dateTime
     }, {
         unique: false,
-        name: `index_${this.config.tableName}_dateTime`,
+        name: `secondary_index_dateTime`,
     });
 ```
 
@@ -243,7 +241,6 @@ Query Logs: [./logs/dynamo.query.indexed.txt](./logs/dynamo.query.indexed.txt)
 | Indexed Diff | +153446ms | -149ms |   +76649ms   |     +158ms     |      +4ms       |
 
 In this comparison, we can see that using mongo DB indexes only start to become beneficial after the RW ratio of 1000:1.
-
 
 # Task 3: Java Heap File
 
@@ -317,8 +314,9 @@ Currently, the search feature of the b+-Tree only works for unique keys. This is
 The Index is read-only as is it built at run time and held in memory there is functionality to insert and delete nodes but as there was no requirement for the heap file to handle updates neither does the index. This could be a future improvement for both the index and the heap file.
 
 Another future improvement would be to finish saving the index to a file and make it load one node at a time. This would mean the index would only have to be built once and the full index would not have to be stored in memory.
+
 ### New Files
-All the new files for this implementation are located under the `./Index` 
+All the new files for this implementation are located under `./Index` 
 
 - Index
   - bTree
@@ -388,9 +386,7 @@ All the new files for this implementation are located under the `./Index`
 
 
 ### Final Thoughts
-Surprisingly I enjoyed building the B+Tree even though I was not able to complete all the features that I wanted to include. Normally I'm not a huge fan of data structure projects as there are normally libraries that already do what you need, however it is refreshing to get under the hood sometimes especially when it's of something that you used day today. For me, that is DynamoDb from AWS. After seeing the sub-millisecond load times of the b+tree I was interested to see what algorithm Dynamo uses as I use that almost every day at work for their response time. I was surprised to see that Dynamo uses b-trees to located items. I think I will continue this research onto graph databases next to see what they use under the hood and how they could help in my production systems.
-
-
+Surprisingly I enjoyed building the B+Tree even though I was not able to complete all the features that I wanted to include. Normally I'm not a huge fan of data structure projects as there are normally libraries that already do what you need, however it is refreshing to get under the hood sometimes especially when it's of something that you used day today. For me, that is DynamoDb from AWS. After seeing the sub-millisecond load times of the b+tree I was interested to see what algorithm Dynamo uses as I use it almost every day at work for its response time. I was surprised to see that Dynamo uses b-trees to locate its items. I think I will continue this research onto graph databases next to see what they use under the hood and how they could help in my production systems.
 
 
 # All in Comparison
@@ -403,7 +399,7 @@ Now that we have results for all the different DBs let's see how they stack up. 
 | RW 1000:1 Ratio ms |      310       |  131072  | ***! 253 !*** |   NO    | 1624    |   YES   |
 
 
-Now that we have all the databases together we can see the winner is *MongoDB*. I did think initial MongoDB was going to win on all fronts but clearly, the JavaHeap has the fastest write times. Though we have to keep in mind that the Java Heap did not have to go over the network will uploading, unlike Mongo and Derby. Further testing would be required for the Java Heap to be on an even playing field.
+Now that we have all the databases together we can see the winner is *MongoDB*. I did think initial MongoDB was going to win on all fronts but clearly, the JavaHeap has the fastest write times. Though we have to keep in mind that the Java Heap did not have to go over the network while uploading, unlike Mongo and Derby. Further testing would be required for the Java Heap to be on an even playing field.
 
 
 
