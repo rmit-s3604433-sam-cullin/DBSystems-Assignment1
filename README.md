@@ -119,6 +119,11 @@ CREATE TABLE TESTING (
 
 
 ## Test Results:
+
+Query used for testing on both indexed an non indexed query times 
+```sql
+Select * from ${table} where id = ${id}
+```
 Write Logs: [./logs/derby.1000.txt](./logs/derby.1000.txt)
 
 Query Logs: [./logs/derby.query.txt](./logs/derby.query.txt)
@@ -188,9 +193,21 @@ MongoDB has better support for typescript than Derby using the package `mongodb`
 As mongoDB is a document store there is no reason to define a structure for the object we only need to set which collection we want to save the objects to.
 
 ## Test Results:
+Query used for testing on both indexed an non indexed query times 
+```ts
+collection.findOne({ id: id }, (error, entity) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    return resolve(entity)
+                });
+```
+
 Write Logs: [./logs/dynamo.1000.txt](./logs/dynamo.1000.txt)
 
 Query Logs: [./logs/dynamo.query.txt](./logs/dynamo.query.txt)
+
+
 
 
 |  Write  | Read  |
