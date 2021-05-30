@@ -175,7 +175,7 @@ Query Logs: [./logs/derby.query.indexed.txt](./logs/derby.query.indexed.txt)
 | Non Indexed  | 1123009ms | 1505ms  |  1124514ms   |     3192ms     |     2625ms      |
 | Indexed Diff | +449906ms | -1452ms |  +448454ms   |     +551ms     |     -1001ms     |
 
-The RW Ratios the influence the index has depending on how many read vs write requests you are planning to make. From this, we can see that if you plan to make 500 read requests to every write request then it is still not worth including an index. As the average request would be 551ms slower with an index.
+The RW Ratios shows how the index influences the average request time given an expected "read" to "write" requests ratio. For example, if you are expecting more read traffic you will want to optimize for that and vice versa for writes. From this, we can see that if you believe you will receive 500 read requests for every write request then it is still not worth including an index. As the average request would be 551ms slower with an index. However, if you expect to receive 1000 read requests for every write request then it would be worth including an index as your average request would be 1001 ms faster.
 
 
 
